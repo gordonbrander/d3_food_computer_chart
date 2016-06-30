@@ -9,47 +9,56 @@ const readY = d => d.y;
 // var xAxis = d3.axisBottom(x);
 // var yAxis = d3.axisLeft(y);
 
-const initChart = $container => {
-  $container.append('svg').append('g');
-}
+const init = (container, {width, height}) =>
+  container
+    .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+    .append('g');
 
 // Renders the chart
-const chart = (chart, data, width, height, readX, readY) => {
-  const svg = chart
-    .append('svg')
+const chart = (svg, series, config) => {
 
-  svg.append('g');
+  const {width, height, readX, readY} = config;
 
-  svg
-    .attr('width', width)
-    .attr('height', height);
+  const calcD = d => {
+    const x = d3.scaleTime()
+      .range([0, width])
+      .domain(d3.extent(d, readX));
 
-  svg.append('path')
-    .attr('class', 'chart-line');
+    const y = d3.scaleLinear()
+      .range([height, 0])
+      .domain(d3.extent(d, readY));
+
+    const line = d3.line()
+      .x(comp2(x, readX))
+      .y(comp2(y, readY));
+
+    return line(d);
+  }
 
   svg.selectAll('.chart-line')
-    .call(line, data, width, height, readX, readY);
+    .data(series)
+      .attr('d', calcD)
+    .enter()
+      .append('path')
+      .attr('class', 'chart-line')
+      .attr('d', calcD)
+    .exit()
+      .remove();
 
   return svg;
 }
 
-const line = ($line, data, width, height, readX, readY) => {
-  const x = d3.scaleTime()
-    .range([0, width])
-    .domain(d3.extent(data, readX));
+const svg = init(d3.select('#chart'), {
+  width: 800,
+  height: 300
+});
 
-  const y = d3.scaleLinear()
-    .range([height, 0])
-    .domain(d3.extent(data, readY));
-
-  console.log(x(width), y(height));
-
-
-  const line = d3.line()
-    .x(comp2(x, readX))
-    .y(comp2(y, readY));
-
-  return $line.datum(data).attr('d', line).enter();
-}
-
-d3.select('#chart').call(chart, data, 800, 600, readX, readY);
+chart(svg, [data, data2], {
+  data,
+  width: 800,
+  height: 300,
+  readX,
+  readY
+});
