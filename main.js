@@ -20,7 +20,20 @@ const calcY = (data, height, readY) =>
       .domain(d3.extent(data, readY));
 
 const enter = (container, {width, height}) => {
-  container.append('svg');
+  const xhair = container.append('div')
+    .classed('chart-xhair', true);
+
+  container
+    .classed('chart', true);
+
+  container.append('svg')
+    .on('mousemove', d => {
+      xhair.style('left', d3.event.clientX + 'px');
+    });
+
+  container.append('div')
+    .classed('chart-tooltip', true);
+
   return container;
 }
 
@@ -39,12 +52,16 @@ const update = (container, series, config) => {
     return line(data);
   }
 
+  container
+    .style('width', width + 'px')
+    .style('height', height + 'px');
+
   const svg = container.selectAll('svg')
     .attr('width', width)
     .attr('height', height)
 
   const group = svg.selectAll('.chart-group')
-    .data(series)
+    .data(series);
 
   group.exit()
     .remove();
@@ -57,8 +74,9 @@ const update = (container, series, config) => {
     .append('path')
       .classed('chart-line', true)
       .style('stroke', group => group.color)
+      .on('mouseover', (d) => log(d));
 
-  const groupAll = groupEnter.merge(group);
+  const groupAll = group.merge(groupEnter);
 
   groupAll.select('.chart-line')
     .attr('d', calcD);

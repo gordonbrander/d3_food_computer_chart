@@ -2,6 +2,10 @@ body {
   font: 10px sans-serif;
 }
 
+.chart {
+  position: relative;
+}
+
 .chart-line {
   fill: none;
   stroke: steelblue;
@@ -12,4 +16,12 @@ body {
   fill: white;
   stroke: steelblue;
   stroke-width: 1.5px;
+}
+
+.chart-xhair {
+  background: #ff8300;
+  height: 100%;
+  width: 1px;
+  position: absolute;
+  top: 0;
 }
