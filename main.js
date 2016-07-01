@@ -20,9 +20,7 @@ const calcY = (data, height, readY) =>
       .domain(d3.extent(data, readY));
 
 const enter = (container, {width, height}) => {
-  container
-    .append('svg')
-    .append('g');
+  container.append('svg');
   return container;
 }
 
@@ -45,27 +43,25 @@ const update = (container, series, config) => {
     .attr('width', width)
     .attr('height', height)
 
-  const g = svg.select('g')
-
-  g.selectAll('.chart-line')
+  const g = svg.selectAll('.chart-group')
     .data(series)
-      .attr('d', calcD)
-    .enter()
-      .append('path')
+    .attr('class', 'chart-group')
+
+  g.enter()
+    .append('g')
+    .attr('class', 'chart-group')
+    // Append line
+    .append('path')
       .attr('class', 'chart-line')
-      .style('stroke', group => group.color)
       .attr('d', calcD)
-    .exit()
-      .remove();
+      .style('stroke', group => group.color)
 
-  g.selectAll('.chart-dot')
-    .data(group => group.data)
-  .enter()
-    .append('circle')
-    .attr('class', 'chart-dot')
-  .exit()
-    .remove();
+  g.exit()
+    .remove()
 
+  // Update line
+  g.select('path')
+    .attr('d', calcD)
 
   return svg;
 }
