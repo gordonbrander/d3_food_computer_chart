@@ -39,33 +39,32 @@ const update = (container, series, config) => {
     return line(data);
   }
 
-  const svg = container.select('svg')
+  const svg = container.selectAll('svg')
     .attr('width', width)
     .attr('height', height)
 
-  const g = svg.selectAll('.chart-group')
+  const group = svg.selectAll('.chart-group')
     .data(series)
-    .attr('class', 'chart-group')
 
-  const gEnter = g.enter()
-    .append('g')
-    .attr('class', 'chart-group');
-
-  const gExit = g.exit()
+  group.exit()
     .remove();
 
-  // Update line
-  g.select('path')
-    .attr('d', calcD)
+  const groupEnter = group.enter()
+    .append('g')
+      .classed('chart-group', true)
 
-  gEnter
+  groupEnter
     .append('path')
-    .attr('class', 'chart-line')
-    .attr('d', calcD)
-    .style('stroke', group => group.color)
+      .classed('chart-line', true)
+      .style('stroke', group => group.color)
+
+  const groupAll = groupEnter.merge(group);
+
+  groupAll.select('.chart-line')
+    .attr('d', calcD);
 
   // Add chart dots
-  gEnter.selectAll('.chart-dot')
+  groupAll.selectAll('.chart-dot')
     // Filter down to data
     .data(group => group.data)
   .enter()
