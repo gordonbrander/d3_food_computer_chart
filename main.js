@@ -47,21 +47,35 @@ const update = (container, series, config) => {
     .data(series)
     .attr('class', 'chart-group')
 
-  g.enter()
+  const gEnter = g.enter()
     .append('g')
-    .attr('class', 'chart-group')
-    // Append line
-    .append('path')
-      .attr('class', 'chart-line')
-      .attr('d', calcD)
-      .style('stroke', group => group.color)
+    .attr('class', 'chart-group');
 
-  g.exit()
-    .remove()
+  const gExit = g.exit()
+    .remove();
 
   // Update line
   g.select('path')
     .attr('d', calcD)
+
+  gEnter
+    .append('path')
+    .attr('class', 'chart-line')
+    .attr('d', calcD)
+    .style('stroke', group => group.color)
+
+  // Add chart dots
+  gEnter.selectAll('.chart-dot')
+    // Filter down to data
+    .data(group => group.data)
+  .enter()
+    .append('circle')
+    .attr('class', 'chart-dot')
+    .attr('cx', compose(calcX(data, width, readX), readX))
+    .attr('cy', compose(calcY(data, height, readY), readY))
+    .attr("r", 3.5)
+  .exit()
+    .remove();
 
   return svg;
 }

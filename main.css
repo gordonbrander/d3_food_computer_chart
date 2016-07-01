@@ -7,3 +7,9 @@ body {
   stroke: steelblue;
   stroke-width: 1.5px;
 }
+
+.chart-dot {
+  fill: white;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
