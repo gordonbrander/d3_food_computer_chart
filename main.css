@@ -5,5 +5,5 @@ body {
 .chart-line {
   fill: none;
   stroke: steelblue;
-  stroke-width: 1px;
+  stroke-width: 1.5px;
 }
