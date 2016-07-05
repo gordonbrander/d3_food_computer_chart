@@ -46,7 +46,7 @@ const enter = (container, config) => {
 
   container
     .classed('chart', true)
-    .on('mousemove', function (d) {
+    .on('mousemove', function (group) {
       const x = d3.event.clientX - this.offsetLeft;
       const tx = calcTooltipX(x, width, tooltipWidth);
       xhair.style('left', px(x));
@@ -130,15 +130,20 @@ const update = (container, config) => {
     .append('div')
     .classed('chart-tooltip--readout', true);
 
+  const readoutAll = readout.merge(readoutEnter)
+    .html(d => `<div class="chart-tooltip--title">${d.title}</div>`);
+
   return container;
 }
 
 const series = [
   {
+    title: 'Air Temperature',
     color: '#0052b3',
     data: data
   },
   {
+    title: 'Water Temperature',
     color: '#00a5ed',
     data: data2
   }
