@@ -128,10 +128,21 @@ const update = (container, config) => {
 
   const readoutEnter = readout.enter()
     .append('div')
-    .classed('chart-tooltip--readout', true);
+    .classed('chart-tooltip--readout', true);  
 
-  const readoutAll = readout.merge(readoutEnter)
-    .html(d => `<div class="chart-tooltip--title">${d.title}</div>`);
+  readoutEnter.append('div')
+    .classed('chart-tooltip--legend', true);
+
+  readoutEnter.append('div')
+    .classed('chart-tooltip--title', true);
+
+  const readoutAll = readout.merge(readoutEnter);
+
+  readoutAll.select('.chart-tooltip--legend')
+    .style('background-color', d => d.color);
+
+  readoutAll.select('.chart-tooltip--title')
+    .text(d => d.title);
 
   return container;
 }
