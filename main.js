@@ -13,22 +13,27 @@ const readY = d => d.y;
 
 const calcX = (data, width, readX) =>
   d3.scaleTime()
-  .range([0, width])
-  .domain(d3.extent(data, readX));
+    .range([0, width])
+    .domain(d3.extent(data, readX));
 
 const calcY = (data, height, readY) =>
   d3.scaleLinear()
-      .range([height, 0])
-      .domain(d3.extent(data, readY));
+    .range([height, 0])
+    .domain(d3.extent(data, readY));
 
-const calcTooltipX = (x, width, tooltipWidth) =>
-  (x + (tooltipWidth / 2)) > width ?
-  (width - (tooltipWidth / 2)) :
-  (x - (tooltipWidth / 2)) < 0 ?
-  (tooltipWidth / 2) :
-  x;
+const calcTooltipX = (x, width, tooltipWidth) => {
+  const halfTooltipWidth = (tooltipWidth / 2);
+  return (x + halfTooltipWidth) > width ?
+    (width - halfTooltipWidth) :
+    (x - halfTooltipWidth) < 0 ?
+    halfTooltipWidth :
+    x;
+}
 
-const enter = (container, {width, tooltipWidth}) => {
+const enter = (container, config) => {
+  const {width, tooltipWidth} = config;
+  const series = container.datum();
+
   const xhair = container.append('div')
     .classed('chart-xhair', true);
 
@@ -43,8 +48,7 @@ const enter = (container, {width, tooltipWidth}) => {
     .classed('chart', true)
     .on('mousemove', function (d) {
       const x = d3.event.clientX - this.offsetLeft;
-      const tx = calcTooltipX(x, width, tooltipWidth)
-
+      const tx = calcTooltipX(x, width, tooltipWidth);
       xhair.style('left', px(x));
       tooltip.style('left', px(tx));
     });
@@ -53,15 +57,16 @@ const enter = (container, {width, tooltipWidth}) => {
 }
 
 // Renders the chart
-const update = (container, series, config) => {
+const update = (container, config) => {
   const {width, height, readX, readY} = config;
   const graphHeight = height - 100;
+
+  const series = container.datum();
 
   const calcD = group => {
     const {data} = group;
 
     const line = d3.line()
-      .curve(d3.curveBasis)
       .x(compose(calcX(data, width, readX), readX))
       .y(compose(calcY(data, graphHeight, readY), readY));
 
@@ -84,7 +89,7 @@ const update = (container, series, config) => {
 
   const groupEnter = group.enter()
     .append('g')
-      .classed('chart-group', true)
+      .classed('chart-group', true);
 
   groupEnter
     .append('path')
@@ -94,37 +99,39 @@ const update = (container, series, config) => {
   const groupAll = group.merge(groupEnter);
 
   groupAll.select('.chart-line')
-    .attr('d', calcD);
+    .attr('d', calcD)
 
-  // Add chart dots
-  groupAll.selectAll('.chart-dot')
-    // Filter down to data
-    .data(group => group.data)
-  .enter()
-    .append('circle')
-    .attr('class', 'chart-dot')
-    .attr('cx', compose(calcX(data, width, readX), readX))
-    .attr('cy', compose(calcY(data, graphHeight, readY), readY))
-    .attr("r", 2.5)
-  .exit()
-    .remove();
+  groupAll
+    .each(function (group) {
+      const {data} = group;
+
+      const chartDot = d3.select(this).selectAll('.chart-dot')
+        .data(group.data);
+
+      const chartDotExit = chartDot.exit()
+        .remove();
+
+      const chartDotEnter = chartDot.enter()
+        .append('circle')
+        .attr('class', 'chart-dot')
+        .attr("r", 3)
+        .style('fill', group.color);
+
+      const chartDotAll = chartDot.merge(chartDotEnter)
+        .attr('cx', compose(calcX(data, width, readX), readX))
+        .attr('cy', compose(calcY(data, graphHeight, readY), readY));
+    });
+
 
   const readout = d3.select('.chart-tooltip').selectAll('.chart-tooltip--readout')
-    .data(series)
+    .data(series);
 
   const readoutEnter = readout.enter()
     .append('div')
-    .classed('chart-tooltip--readout', true)
-    .on('mousemove', function (d) {
-      // @TODO hmmm
-      const x = compose(calcX(data, width, readX), readX);
-      this.text(x(d));
-    });
+    .classed('chart-tooltip--readout', true);
 
-  return svg;
+  return container;
 }
-
-const svg = enter(d3.select('#chart'), {width: 800, tooltipWidth: 240});
 
 const series = [
   {
@@ -135,9 +142,13 @@ const series = [
     color: '#00a5ed',
     data: data2
   }
-]
+];
 
-update(svg, series, {
+const container = d3.select('#chart').datum(series);
+
+enter(container, {width: 800, tooltipWidth: 240});
+
+update(container, {
   width: 800,
   height: 600,
   readX,

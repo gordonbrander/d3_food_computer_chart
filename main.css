@@ -15,7 +15,7 @@ body {
 
 .chart-dot {
   fill: white;
-  stroke: steelblue;
+  stroke: #f4f4f4;
   stroke-width: 1.5px;
 }
 
@@ -33,7 +33,6 @@ body {
   border-top: 3px solid #ff8300;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   height: 80px;
-  margin-left: -120px;
-  width: 240px;
+  /* width and margin are set by JS dynamically */
   position: absolute;
 }
