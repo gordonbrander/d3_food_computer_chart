@@ -37,7 +37,7 @@ body {
   position: absolute;
 }
 
-.chart-tooltip--legend {
+.chart-readout--legend {
   border-radius: 50%;
   height: 8px;
   width: 8px;

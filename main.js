@@ -21,6 +21,14 @@ const calcY = (data, height, readY) =>
     .range([height, 0])
     .domain(d3.extent(data, readY));
 
+const calcD = (data, width, height, readX, readY) => {
+  const line = d3.line()
+    .x(compose(calcX(data, width, readX), readX))
+    .y(compose(calcY(data, height, readY), readY));
+
+  return line(data);
+}
+
 const calcTooltipX = (x, width, tooltipWidth) => {
   const halfTooltipWidth = (tooltipWidth / 2);
   return (x + halfTooltipWidth) > width ?
@@ -31,7 +39,7 @@ const calcTooltipX = (x, width, tooltipWidth) => {
 }
 
 const enter = (container, config) => {
-  const {width, tooltipWidth} = config;
+  const {width, tooltipWidth, readX, readY} = config;
   const series = container.datum();
 
   const xhair = container.append('div')
@@ -44,13 +52,29 @@ const enter = (container, config) => {
 
   container.append('svg');
 
+  // Used for deriving y value from x position.
+  const bisectDate = d3.bisector(readX).left;
+
   container
     .classed('chart', true)
-    .on('mousemove', function (group) {
+    .on('mousemove', function () {
       const x = d3.event.clientX - this.offsetLeft;
       const tx = calcTooltipX(x, width, tooltipWidth);
       xhair.style('left', px(x));
       tooltip.style('left', px(tx));
+
+      d3.select('.chart-tooltip').selectAll('.chart-readout--value')
+        .text(function (group) {
+          // Adapted from http://bl.ocks.org/mbostock/3902569 (GPL)
+          const x = calcX(group.data, width, readX);
+          const x0 = x.invert(d3.mouse(this)[0]);
+          const i = bisectDate(data, x0, 1);
+          const d0 = data[i - 1];
+          const d1 = data[i];
+          // Pick closer of the two.
+          const d = x0 - readX(d0) > readX(d1) - x0 ? d1 : d0;
+          return readY(d);
+        });
     });
 
   return container;
@@ -62,16 +86,6 @@ const update = (container, config) => {
   const graphHeight = height - 100;
 
   const series = container.datum();
-
-  const calcD = group => {
-    const {data} = group;
-
-    const line = d3.line()
-      .x(compose(calcX(data, width, readX), readX))
-      .y(compose(calcY(data, graphHeight, readY), readY));
-
-    return line(data);
-  }
 
   container
     .style('width', px(width))
@@ -99,7 +113,7 @@ const update = (container, config) => {
   const groupAll = group.merge(groupEnter);
 
   groupAll.select('.chart-line')
-    .attr('d', calcD)
+    .attr('d', group => calcD(group.data, width, graphHeight, readX, readY))
 
   groupAll
     .each(function (group) {
@@ -123,26 +137,29 @@ const update = (container, config) => {
     });
 
 
-  const readout = d3.select('.chart-tooltip').selectAll('.chart-tooltip--readout')
+  const readout = d3.select('.chart-tooltip').selectAll('.chart-readout')
     .data(series);
 
   const readoutEnter = readout.enter()
     .append('div')
-    .classed('chart-tooltip--readout', true);  
+    .classed('chart-readout', true);  
 
   readoutEnter.append('div')
-    .classed('chart-tooltip--legend', true);
+    .classed('chart-readout--legend', true);
 
   readoutEnter.append('div')
-    .classed('chart-tooltip--title', true);
+    .classed('chart-readout--title', true);
 
   const readoutAll = readout.merge(readoutEnter);
 
-  readoutAll.select('.chart-tooltip--legend')
+  readoutAll.select('.chart-readout--legend')
     .style('background-color', d => d.color);
 
-  readoutAll.select('.chart-tooltip--title')
+  readoutAll.select('.chart-readout--title')
     .text(d => d.title);
+
+  readoutEnter.append('div')
+    .classed('chart-readout--value', true);
 
   return container;
 }
@@ -151,22 +168,26 @@ const series = [
   {
     title: 'Air Temperature',
     color: '#0052b3',
-    data: data
+    data: data,
+    unit: '°C'
   },
   {
     title: 'Water Temperature',
     color: '#00a5ed',
-    data: data2
+    data: data2,
+    unit: '°C'
   }
 ];
 
 const container = d3.select('#chart').datum(series);
 
-enter(container, {width: 800, tooltipWidth: 240});
-
-update(container, {
+const config = {
   width: 800,
   height: 600,
+  tooltipWidth: 240,
   readX,
   readY
-});
+};
+
+enter(container, config);
+update(container, config);
