@@ -81,6 +81,15 @@ const enter = (container, config) => {
     .style('width', px(tooltipWidth))
     .style('margin-left', px(-1 * (tooltipWidth / 2)));
 
+  const scrubber = container.append('div')
+    .classed('chart-scrubber', true);
+
+  const progress = scrubber.append('div')
+    .classed('chart-progress', true);
+
+  const threshold = scrubber.append('div')
+    .classed('chart-threshold', true);
+
   container.append('svg');
 
   // Used for deriving y value from x position.

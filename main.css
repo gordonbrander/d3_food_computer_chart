@@ -42,3 +42,31 @@ body {
   height: 8px;
   width: 8px;
 }
+
+.chart-scrubber {
+  background-color: #ffffff;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  height: 40px;
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+}
+
+.chart-progress {
+  background-color: #ddd;
+  height: 40px;
+}
+
+.chart-threshold {
+  background: #ff8300;
+  bottom: 0;
+  cursor: -webkit-grab;
+  cursor: grab;
+  position: absolute;
+  height: 50px;
+  width: 2px;
+}
+.chart-threshold--dragging {
+  cursor: -webkit-grabbing;
+  cursor: grabbing;
+}
