@@ -90,7 +90,9 @@ const enter = (container, config) => {
   container
     .classed('chart', true)
     .on('mousemove', function () {
+      // Adapted from http://bl.ocks.org/mbostock/3902569 (GPL)
       const [mouseX, mouseY] = d3.mouse(this);
+      const x0 = x.invert(mouseX);
       const tx = calcTooltipX(mouseX, width, tooltipWidth);
       xhair.style('left', px(mouseX));
       tooltip.style('left', px(tx));
@@ -98,8 +100,6 @@ const enter = (container, config) => {
       d3.select('.chart-tooltip').selectAll('.chart-readout--value')
         .text(function (group) {
           const {data} = group;
-          // Adapted from http://bl.ocks.org/mbostock/3902569 (GPL)
-          const x0 = x.invert(d3.mouse(this)[0]);
           const i = bisectDate(data, x0, 1);
           const d0 = data[i - 1];
           const d1 = data[i];
@@ -152,7 +152,7 @@ const update = (container, config) => {
 
       const line = d3.line()
         .x(compose(x, readX))
-        .y(compose(calcY(data, height, readY), readY));
+        .y(compose(calcY(data, graphHeight, readY), readY));
 
       return line(data);
     })
@@ -208,15 +208,15 @@ const update = (container, config) => {
 
 const series = [
   {
-    title: 'Air Temperature',
-    color: '#0052b3',
-    data: DATA,
-    unit: '°C'
-  },
-  {
     title: 'Water Temperature',
     color: '#00a5ed',
     data: DATA2,
+    unit: '°C'
+  },
+  {
+    title: 'Air Temperature',
+    color: '#0052b3',
+    data: DATA,
     unit: '°C'
   }
 ];
@@ -226,7 +226,7 @@ const container = d3.select('#chart').datum(series);
 const config = {
   // Duration to show within chart.
   durationMs: HR_MS,
-  width: 800,
+  width: 80000,
   height: 600,
   tooltipWidth: 240,
   readX,
