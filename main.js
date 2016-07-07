@@ -33,6 +33,16 @@ const calcD = (data, width, height, readX, readY) => {
   return line(data);
 }
 
+// Create a slice for a given x period.
+// array is assumed to be sorted by x.
+// readX is a function that reads each item and returns a value for x.
+const sliceTime = (array, start, end, readX) => {
+  const bisect = d3.bisector(readX);
+  const from = bisect.left(array, start);
+  const to = bisect.right(array, end);
+  return array.slice(from, to);
+}
+
 const calcTooltipX = (x, width, tooltipWidth) => {
   const halfTooltipWidth = (tooltipWidth / 2);
   return (x + halfTooltipWidth) > width ?
