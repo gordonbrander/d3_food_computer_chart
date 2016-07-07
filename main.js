@@ -155,7 +155,7 @@ const update = (container, config) => {
         .y(compose(calcY(data, graphHeight, readY), readY));
 
       return line(data);
-    })
+    });
 
   groupAll
     .each(function (group) {
