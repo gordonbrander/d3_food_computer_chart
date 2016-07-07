@@ -19,35 +19,34 @@ const round2x = float =>
 // Flatten an array of arrays into a 1d array.
 const flatten = arrays => Array.prototype.concat.apply(Array, arrays);
 
-// Calculate the x scale over the entire series of data.
-const calcXOverSeries = (series, width, readX) => {
-  // Map to array of arrays.
-  const datas = series.map(getData);
-  // Combine all arrays of data into single array.
-  const combined = flatten(datas);
-  const extent = d3.extent(combined, readX);
-  return d3.scaleTime()
-    .domain(extent)
-    .range([0, width]);
+// Calculate the extent over the whole chart series. In other words, find the
+// lowest value and the highest value for the series.
+const extentOverSeries = (series, readX) =>
+  d3.extent(flatten(series.map(getData)), readX);
+
+// Calc the width of the plot from the x extent, the window width and the
+// ms time interval to show within the window.
+const calcWidthFromExtent = (extent, width, interval) => {
+  const [startSeries, endSeries] = extent;
+  const secondsInSeries = endSeries - startSeries;
+  const pxPerSecond = ((interval / width) / 1000);
+  const widthOfPlot = secondsInSeries * pxPerSecond;
+  return widthOfPlot;
 }
 
-const calcX = (data, width, readX) =>
-  d3.scaleTime()
-    .domain(d3.extent(data, readX))
-    .range([0, width]);
+// Calculate the x scale over the whole chart series.
+const calcXOverSeries = (series, width, interval, readX) => {
+  const extent = extentOverSeries(series, readX);
+  const plotWidth = calcWidthFromExtent(extent, width, interval);
+  return d3.scaleTime()
+    .domain(extent)
+    .range([0, plotWidth]);
+}
 
 const calcY = (data, height, readY) =>
   d3.scaleLinear()
     .range([height, 0])
     .domain(d3.extent(data, readY));
-
-const calcD = (data, width, height, readX, readY) => {
-  const line = d3.line()
-    .x(compose(calcX(data, width, readX), readX))
-    .y(compose(calcY(data, height, readY), readY));
-
-  return line(data);
-}
 
 // Create a slice for a given x period.
 // array is assumed to be sorted by x.
@@ -69,10 +68,10 @@ const calcTooltipX = (x, width, tooltipWidth) => {
 }
 
 const enter = (container, config) => {
-  const {width, tooltipWidth, readX, readY} = config;
+  const {width, interval, tooltipWidth, readX, readY} = config;
   const series = container.datum();
 
-  const x = calcXOverSeries(series, width, readX);
+  const x = calcXOverSeries(series, width, interval, readX);
 
   const xhair = container.append('div')
     .classed('chart-xhair', true);
@@ -115,11 +114,11 @@ const enter = (container, config) => {
 
 // Renders the chart
 const update = (container, config) => {
-  const {width, height, readX, readY} = config;
+  const {width, height, interval, readX, readY} = config;
   const graphHeight = height - 100;
 
   const series = container.datum();
-  const x = calcXOverSeries(series, width, readX);
+  const x = calcXOverSeries(series, width, interval, readX);
 
   container
     .style('width', px(width))
@@ -127,7 +126,7 @@ const update = (container, config) => {
 
   const svg = container.selectAll('svg')
     .attr('width', width)
-    .attr('height', height)
+    .attr('height', height);
 
   const group = svg.selectAll('.chart-group')
     .data(series);
@@ -178,7 +177,6 @@ const update = (container, config) => {
         .attr('cy', compose(calcY(data, graphHeight, readY), readY));
     });
 
-
   const readout = d3.select('.chart-tooltip').selectAll('.chart-readout')
     .data(series);
 
@@ -225,8 +223,8 @@ const container = d3.select('#chart').datum(series);
 
 const config = {
   // Duration to show within chart.
-  durationMs: HR_MS,
-  width: 80000,
+  interval: HR_MS,
+  width: 800,
   height: 600,
   tooltipWidth: 240,
   readX,
