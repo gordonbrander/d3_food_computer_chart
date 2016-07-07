@@ -8,6 +8,10 @@ const px = n => n + 'px';
 const readX = d => d.x;
 const readY = d => d.y;
 
+// Round to 2 decimal places.
+const round2x = float =>
+  Math.round(float * 100) / 100;
+
 // var xAxis = d3.axisBottom(x);
 // var yAxis = d3.axisLeft(y);
 
@@ -73,7 +77,8 @@ const enter = (container, config) => {
           const d1 = data[i];
           // Pick closer of the two.
           const d = x0 - readX(d0) > readX(d1) - x0 ? d1 : d0;
-          return readY(d);
+          const y = readY(d);
+          return round2x(y);
         });
     });
 
