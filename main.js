@@ -24,17 +24,19 @@ const flatten = arrays => Array.prototype.concat.apply(Array, arrays);
 const extentOverSeries = (series, readX) =>
   d3.extent(flatten(series.map(getData)), readX);
 
-// Calculate the x scale over the whole chart series.
-const calcXOverSeries = (series, width, interval, readX) => {
-  const extent = extentOverSeries(series, readX);
+const calcPlotWidth = (extent, interval, width) => {
   const durationSec = extent[1] - extent[0];
   const durationMs = durationSec * 1000;
   const pxPerMs = (width / interval);
   const plotWidth = durationMs * pxPerMs;
+  return plotWidth;
+}
 
+// Calculate the x scale over the whole chart series.
+const calcTimeScale = (extent, interval, width) => {
   return d3.scaleTime()
     .domain(extent)
-    .range([0, plotWidth]);
+    .range([0, calcPlotWidth(extent, interval, width)]);
 }
 
 const calcY = (data, height, readY) =>
@@ -55,7 +57,13 @@ const enter = (container, config) => {
   const {width, interval, tooltipWidth, readX, readY} = config;
   const series = container.datum();
 
-  const x = calcXOverSeries(series, width, interval, readX);
+  const extent = extentOverSeries(series, readX);
+  const plotWidth = calcPlotWidth(extent, interval, width);
+  const x = calcTimeScale(extent, interval, width);
+
+  const widthToPlotWidth = d3.scaleLinear()
+    .domain([0, width])
+    .range([0, plotWidth]);
 
   const xhair = container.append('div')
     .classed('chart-xhair', true);
@@ -80,6 +88,8 @@ const enter = (container, config) => {
   threshold.append('div')
     .classed('chart-threshold--line', true);
 
+  const svg = container.append('svg');
+
   // Define drag behavior
   const thresholdDrag = d3.drag()
     .on('start', function () {
@@ -89,6 +99,8 @@ const enter = (container, config) => {
       const [x, y] = d3.mouse(container.node());
       d3.select(this).style('transform', 'translateX(' + x + 'px)');
       progress.style('width', px(x));
+
+      svg.style('transform', 'translateX(-' + widthToPlotWidth(x) + 'px)');
     })
     .on('end', function () {
       d3.select(this).classed('chart-threshold--dragging', false);
@@ -96,8 +108,6 @@ const enter = (container, config) => {
 
   // Attach drag behavior
   threshold.call(thresholdDrag);
-
-  const svg = container.append('svg');
 
   // Used for deriving y value from x position.
   const bisectDate = d3.bisector(readX).left;
@@ -134,15 +144,18 @@ const update = (container, config) => {
   const plotHeight = height - 180;
 
   const series = container.datum();
-  const x = calcXOverSeries(series, width, interval, readX);
+
+  const extent = extentOverSeries(series, readX);
+  const plotWidth = calcPlotWidth(extent, interval, width);
+  const x = calcTimeScale(extent, interval, width);
 
   container
     .style('width', px(width))
     .style('height', px(height));
 
   const svg = container.selectAll('svg')
-    .attr('width', width)
-    .attr('height', height);
+    .attr('width', plotWidth)
+    .attr('height', plotHeight);
 
   const group = svg.selectAll('.chart-group')
     .data(series);
