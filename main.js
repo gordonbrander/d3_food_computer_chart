@@ -54,6 +54,17 @@ const calcTooltipX = (x, width, tooltipWidth) => {
     x;
 }
 
+const findDataPointFromX = (data, currX, readX) => {
+  // Used for deriving y value from x position.
+  const bisectDate = d3.bisector(readX).left;
+  const i = bisectDate(data, currX, 1);
+  const d0 = data[i - 1];
+  const d1 = data[i];
+  // Pick closer of the two.
+  const d = currX - readX(d0) > readX(d1) - currX ? d1 : d0;
+  return d;
+}
+
 const enter = (container, config) => {
   const {width, interval, tooltipWidth, readX, readY} = config;
   const series = container.datum();
@@ -73,6 +84,9 @@ const enter = (container, config) => {
     .classed('chart-tooltip', true)
     .style('width', px(tooltipWidth))
     .style('margin-left', px(-1 * (tooltipWidth / 2)));
+
+  const time = tooltip.append('div')
+    .classed('chart-time', true);
 
   const scrubber = container.append('div')
     .classed('chart-scrubber', true);
@@ -110,9 +124,6 @@ const enter = (container, config) => {
   // Attach drag behavior
   threshold.call(thresholdDrag);
 
-  // Used for deriving y value from x position.
-  const bisectDate = d3.bisector(readX).left;
-
   container
     .classed('chart', true)
     .on('mousemove', function () {
@@ -124,14 +135,13 @@ const enter = (container, config) => {
       xhair.style('transform', translateX(mouseX));
       tooltip.style('transform', translateX(tx));
 
+      d3.select('.chart-tooltip').selectAll('.chart-time')
+        .text(plotX);
+
       d3.select('.chart-tooltip').selectAll('.chart-readout--value')
         .text(function (group) {
           const {data} = group;
-          const i = bisectDate(data, x0, 1);
-          const d0 = data[i - 1];
-          const d1 = data[i];
-          // Pick closer of the two.
-          const d = x0 - readX(d0) > readX(d1) - x0 ? d1 : d0;
+          const d = findDataPointFromX(data, x0, readX);
           const y = readY(d);
           return round2x(y);
         });
