@@ -44,6 +44,8 @@ const calcY = (data, height, readY) =>
     .range([height, 0])
     .domain(d3.extent(data, readY));
 
+const clamp = (v, min, max) => Math.max(Math.min(v, max), min);
+
 const calcTooltipX = (x, width, tooltipWidth) => {
   const halfTooltipWidth = (tooltipWidth / 2);
   return (x + halfTooltipWidth) > width ?
@@ -111,10 +113,11 @@ const enter = (container, config) => {
     })
     .on('drag', function () {
       const [x, y] = d3.mouse(container.node());
-      d3.select(this).style('transform', translateX(x));
-      progress.style('width', px(x));
+      const cx = clamp(x, 0, width);
+      d3.select(this).style('transform', translateX(cx));
+      progress.style('width', px(cx));
 
-      svg.style('transform', translateX(-1 * widthToPlotWidth(x)));
+      svg.style('transform', translateX(-1 * widthToPlotWidth(cx)));
     })
     .on('end', function () {
       d3.select(this).classed('chart-threshold--dragging', false);
