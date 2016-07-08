@@ -8,7 +8,7 @@ const compose = (a, b) => (x) => a(b(x));
 const px = n => n + 'px';
 const translateX = n => 'translateX(' + n + 'px)';
 
-const readX = d => d.x;
+const readX = d => d.x * 1000;
 const readY = d => d.y;
 
 const getData = series => series.data;
@@ -26,8 +26,7 @@ const extentOverSeries = (series, readX) =>
   d3.extent(flatten(series.map(getData)), readX);
 
 const calcPlotWidth = (extent, interval, width) => {
-  const durationSec = extent[1] - extent[0];
-  const durationMs = durationSec * 1000;
+  const durationMs = extent[1] - extent[0];
   const pxPerMs = (width / interval);
   const plotWidth = durationMs * pxPerMs;
   return plotWidth;
@@ -136,7 +135,7 @@ const enter = (container, config) => {
       tooltip.style('transform', translateX(tx));
 
       d3.select('.chart-tooltip').selectAll('.chart-time')
-        .text(plotX);
+        .text(x.invert(plotX));
 
       d3.select('.chart-tooltip').selectAll('.chart-readout--value')
         .text(function (group) {
