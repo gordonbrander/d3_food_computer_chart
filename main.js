@@ -6,6 +6,7 @@ const DAY_MS = HR_MS * 24;
 const compose = (a, b) => (x) => a(b(x));
 
 const px = n => n + 'px';
+const translateX = n => 'translateX(' + n + 'px)';
 
 const readX = d => d.x;
 const readY = d => d.y;
@@ -97,10 +98,10 @@ const enter = (container, config) => {
     })
     .on('drag', function () {
       const [x, y] = d3.mouse(container.node());
-      d3.select(this).style('transform', 'translateX(' + x + 'px)');
+      d3.select(this).style('transform', translateX(x));
       progress.style('width', px(x));
 
-      svg.style('transform', 'translateX(-' + widthToPlotWidth(x) + 'px)');
+      svg.style('transform', translateX(-1 * widthToPlotWidth(x)));
     })
     .on('end', function () {
       d3.select(this).classed('chart-threshold--dragging', false);
@@ -117,10 +118,11 @@ const enter = (container, config) => {
     .on('mousemove', function () {
       // Adapted from http://bl.ocks.org/mbostock/3902569 (GPL)
       const [mouseX, mouseY] = d3.mouse(this);
-      const x0 = x.invert(mouseX);
+      const [plotX, plotY] = d3.mouse(svg.node());
+      const x0 = x.invert(plotX);
       const tx = calcTooltipX(mouseX, width, tooltipWidth);
-      xhair.style('left', px(mouseX));
-      tooltip.style('left', px(tx));
+      xhair.style('transform', translateX(mouseX));
+      tooltip.style('transform', translateX(tx));
 
       d3.select('.chart-tooltip').selectAll('.chart-readout--value')
         .text(function (group) {
