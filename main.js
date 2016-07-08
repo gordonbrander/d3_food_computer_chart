@@ -29,7 +29,7 @@ const calcPlotWidth = (extent, interval, width) => {
   const durationMs = extent[1] - extent[0];
   const pxPerMs = (width / interval);
   const plotWidth = durationMs * pxPerMs;
-  return plotWidth;
+  return Math.round(plotWidth);
 }
 
 // Calculate the x scale over the whole chart series.
