@@ -4,6 +4,7 @@ body {
 }
 
 .chart {
+  overflow: hidden;
   position: relative;
 }
 
@@ -29,7 +30,7 @@ body {
 
 .chart-tooltip {
   background: #fff;
-  bottom: 0;
+  bottom: 70px;
   border-top: 3px solid #ff8300;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   height: 80px;
@@ -41,4 +42,47 @@ body {
   border-radius: 50%;
   height: 8px;
   width: 8px;
+}
+
+.chart-scrubber {
+  background-color: #ffffff;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  height: 40px;
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+}
+
+.chart-progress {
+  background-color: #ddd;
+  padding-right: 4px;
+  width: 0;
+  height: 40px;
+}
+
+.chart-threshold {
+  bottom: 0;
+  cursor: -webkit-grab;
+  cursor: grab;
+  position: absolute;
+  height: 56px;
+  width: 10px;
+}
+.chart-threshold--dragging {
+  cursor: -webkit-grabbing;
+  cursor: grabbing;
+}
+
+.chart-threshold--cap {
+  background: #ff8300;
+  border-radius: 100%;
+  height: 10px;
+  width: 10px;
+}
+
+.chart-threshold--line {
+  background: #ff8300;
+  margin-left: 4px;
+  height: 46px;
+  width: 2px;
 }

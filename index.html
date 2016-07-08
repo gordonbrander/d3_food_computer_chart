@@ -243,12 +243,12 @@ const readPoint = d => ({
 const compareByX = (a, b) =>
   a.x > b.x ? 1 : -1;
 
-const data = raw
+const DATA = raw
   .filter(d => d.variable === 'air_temperature')
   .map(readPoint)
   .sort(compareByX);
 
-const data2 = data.slice(-10);
+const DATA2 = DATA.slice(-10);
 
 const log = x => console.log(x);
 </script>
