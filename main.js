@@ -90,6 +90,22 @@ const enter = (container, config) => {
   const threshold = scrubber.append('div')
     .classed('chart-threshold', true);
 
+  // Define drag behavior
+  const thresholdDrag = d3.drag()
+    .on('start', function () {
+      d3.select(this).classed('chart-threshold--dragging', true);
+    })
+    .on('drag', function () {
+      const [x, y] = d3.mouse(container.node());
+      d3.select(this).style('transform', 'translateX(' + x + 'px)');
+    })
+    .on('end', function () {
+      d3.select(this).classed('chart-threshold--dragging', false);
+    });
+
+  // Attach drag behavior
+  threshold.call(thresholdDrag);
+
   container.append('svg');
 
   // Used for deriving y value from x position.
