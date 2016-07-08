@@ -24,20 +24,14 @@ const flatten = arrays => Array.prototype.concat.apply(Array, arrays);
 const extentOverSeries = (series, readX) =>
   d3.extent(flatten(series.map(getData)), readX);
 
-// Calc the width of the plot from the x extent, the window width and the
-// ms time interval to show within the window.
-const calcWidthFromExtent = (extent, width, interval) => {
-  const [startSeries, endSeries] = extent;
-  const secondsInSeries = endSeries - startSeries;
-  const pxPerSecond = ((interval / width) / 1000);
-  const widthOfPlot = secondsInSeries * pxPerSecond;
-  return widthOfPlot;
-}
-
 // Calculate the x scale over the whole chart series.
 const calcXOverSeries = (series, width, interval, readX) => {
   const extent = extentOverSeries(series, readX);
-  const plotWidth = calcWidthFromExtent(extent, width, interval);
+  const durationSec = extent[1] - extent[0];
+  const durationMs = durationSec * 1000;
+  const pxPerMs = (width / interval);
+  const plotWidth = durationMs * pxPerMs;
+
   return d3.scaleTime()
     .domain(extent)
     .range([0, plotWidth]);
@@ -47,16 +41,6 @@ const calcY = (data, height, readY) =>
   d3.scaleLinear()
     .range([height, 0])
     .domain(d3.extent(data, readY));
-
-// Create a slice for a given x period.
-// array is assumed to be sorted by x.
-// readX is a function that reads each item and returns a value for x.
-const sliceTime = (array, start, end, readX) => {
-  const bisect = d3.bisector(readX);
-  const from = bisect.left(array, start);
-  const to = bisect.right(array, end);
-  return array.slice(from, to);
-}
 
 const calcTooltipX = (x, width, tooltipWidth) => {
   const halfTooltipWidth = (tooltipWidth / 2);
@@ -90,6 +74,12 @@ const enter = (container, config) => {
   const threshold = scrubber.append('div')
     .classed('chart-threshold', true);
 
+  threshold.append('div')
+    .classed('chart-threshold--cap', true);
+
+  threshold.append('div')
+    .classed('chart-threshold--line', true);
+
   // Define drag behavior
   const thresholdDrag = d3.drag()
     .on('start', function () {
@@ -98,6 +88,7 @@ const enter = (container, config) => {
     .on('drag', function () {
       const [x, y] = d3.mouse(container.node());
       d3.select(this).style('transform', 'translateX(' + x + 'px)');
+      progress.style('width', px(x));
     })
     .on('end', function () {
       d3.select(this).classed('chart-threshold--dragging', false);
@@ -106,7 +97,7 @@ const enter = (container, config) => {
   // Attach drag behavior
   threshold.call(thresholdDrag);
 
-  container.append('svg');
+  const svg = container.append('svg');
 
   // Used for deriving y value from x position.
   const bisectDate = d3.bisector(readX).left;
@@ -140,7 +131,7 @@ const enter = (container, config) => {
 // Renders the chart
 const update = (container, config) => {
   const {width, height, interval, readX, readY} = config;
-  const graphHeight = height - 100;
+  const plotHeight = height - 180;
 
   const series = container.datum();
   const x = calcXOverSeries(series, width, interval, readX);
@@ -176,7 +167,7 @@ const update = (container, config) => {
 
       const line = d3.line()
         .x(compose(x, readX))
-        .y(compose(calcY(data, graphHeight, readY), readY));
+        .y(compose(calcY(data, plotHeight, readY), readY));
 
       return line(data);
     });
@@ -199,7 +190,7 @@ const update = (container, config) => {
 
       const chartDotAll = chartDot.merge(chartDotEnter)
         .attr('cx', compose(x, readX))
-        .attr('cy', compose(calcY(data, graphHeight, readY), readY));
+        .attr('cy', compose(calcY(data, plotHeight, readY), readY));
     });
 
   const readout = d3.select('.chart-tooltip').selectAll('.chart-readout')
