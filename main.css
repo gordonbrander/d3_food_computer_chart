@@ -50,6 +50,8 @@ body {
   height: 80px;
   /* width and margin are set by JS dynamically */
   position: absolute;
+  /* Needed to get around hw accel bug in Chrome */
+  z-index: 9;
 }
 
 .chart-readout--legend {
@@ -65,6 +67,8 @@ body {
   position: absolute;
   width: 100%;
   bottom: 0;
+  /* Needed to get around hw accel bug in Chrome */
+  z-index: 10;
 }
 
 .chart-progress {
