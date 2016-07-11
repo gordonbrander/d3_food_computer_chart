@@ -3,15 +3,15 @@ body {
   font: 10px sans-serif;
 }
 
-.domain {
+.chart-time-axis .domain {
   display: none;
 }
 
-.tick line {
+.chart-time-axis .tick line {
   stroke: #d8d8d8;
 }
 
-.tick text {
+.chart-time-axis .tick text {
   fill: #b1b1b1;
 }
 
