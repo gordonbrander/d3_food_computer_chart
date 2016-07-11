@@ -54,10 +54,47 @@
   z-index: 9;
 }
 
+.chart-readouts {
+  left: 160px;
+  top: 24px;
+  position: absolute;
+}
+
+.chart-readout {
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.chart-readout--title,
+.chart-readout--value,
+.chart-readout--legend {
+  display: inline-block;
+  margin-right: 8px;
+}
+
 .chart-readout--legend {
   border-radius: 50%;
   height: 8px;
   width: 8px;
+}
+
+.chart-readout--value {
+  font-weight: bold;
+}
+
+.chart-timestamp {
+  left: 24px;
+  top: 24px;
+  position: absolute;
+  width: 136px;
+}
+
+.chart-timestamp--time {
+  font-size: 17px;
+}
+.chart-timestamp--day {
+  color: #b1b1b1;
+  font-size: 11px;
 }
 
 .chart-scrubber {
@@ -72,7 +109,8 @@
 }
 
 .chart-progress {
-  background-color: #ddd;
+  background: url(stripes-dark-blue.png) repeat left center #ddd;
+  background-size: auto 40px;
   padding-right: 5px;
   width: 0;
   height: 40px;

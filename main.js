@@ -92,11 +92,17 @@ const enter = (container, config) => {
     .style('width', px(tooltipWidth))
     .style('height', px(tooltipHeight));
 
-  const time = tooltip.append('div')
-    .classed('chart-time', true);
+  const timestamp = tooltip.append('div')
+    .classed('chart-timestamp', true);
 
-  const day = tooltip.append('div')
-    .classed('chart-day', true);
+  const time = timestamp.append('div')
+    .classed('chart-timestamp--time', true);
+
+  const day = timestamp.append('div')
+    .classed('chart-timestamp--day', true);
+
+  const readouts = tooltip.append('div')
+    .classed('chart-readouts', true);
 
   const scrubber = container.append('div')
     .classed('chart-scrubber', true);
@@ -164,18 +170,22 @@ const enter = (container, config) => {
 
       const date = x.invert(plotX);
 
-      d3.select('.chart-tooltip').selectAll('.chart-day')
+      d3.select('.chart-tooltip').selectAll('.chart-timestamp--day')
         .text(formatDay(date));
 
-      d3.select('.chart-tooltip').selectAll('.chart-time')
+      d3.select('.chart-tooltip').selectAll('.chart-timestamp--time')
         .text(formatTime(date));
 
       d3.select('.chart-tooltip').selectAll('.chart-readout--value')
+        .style('color', function (group) {
+          const {color} = group;
+          return color;
+        })
         .text(function (group) {
-          const {data} = group;
+          const {data, unit} = group;
           const d = findDataPointFromX(data, x0, readX);
-          const yv = readY(d);
-          return round2x(yv);
+          const yv = round2x(readY(d));
+          return yv + unit;
         });
     });
 
@@ -275,7 +285,7 @@ const update = (container, config) => {
         .attr('cy', compose(y, readY));
     });
 
-  const readout = d3.select('.chart-tooltip').selectAll('.chart-readout')
+  const readout = d3.select('.chart-readouts').selectAll('.chart-readout')
     .data(series);
 
   const readoutEnter = readout.enter()
@@ -301,36 +311,3 @@ const update = (container, config) => {
 
   return container;
 }
-
-const series = [
-  {
-    title: 'Water Temperature',
-    color: '#00a5ed',
-    data: DATA2,
-    unit: '°C'
-  },
-  {
-    title: 'Air Temperature',
-    color: '#0052b3',
-    data: DATA,
-    unit: '°C',
-    min: 7.2,
-    max: 48.8
-  }
-];
-
-const container = d3.select('#chart').datum(series);
-
-const config = {
-  // Duration to show within chart.
-  interval: HR_MS,
-  width: 800,
-  height: 600,
-  tooltipHeight: 112,
-  tooltipWidth: 424,
-  readX,
-  readY
-};
-
-enter(container, config);
-update(container, config);
