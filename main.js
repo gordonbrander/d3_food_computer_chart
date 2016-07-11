@@ -3,6 +3,8 @@ const MIN_MS = S_MS * 60;
 const HR_MS = MIN_MS * 60;
 const DAY_MS = HR_MS * 24;
 
+const isNumber = x => (typeof x === 'number');
+
 const compose = (a, b) => (x) => a(b(x));
 
 const px = n => n + 'px';
@@ -132,8 +134,8 @@ const enter = (container, config) => {
         .text(function (group) {
           const {data} = group;
           const d = findDataPointFromX(data, x0, readX);
-          const y = readY(d);
-          return round2x(y);
+          const yv = readY(d);
+          return round2x(yv);
         });
     });
 
@@ -180,9 +182,12 @@ const update = (container, config) => {
     .attr('d', group => {
       const {data} = group;
 
+      const domain = isNumber(group.min) && isNumber(group.max) ?
+        [group.min, group.max] : d3.extent(data, readY);
+
       const y = d3.scaleLinear()
         .range([plotHeight, 0])
-        .domain(d3.extent(data, readY));
+        .domain(domain);
 
       const line = d3.line()
         .x(compose(x, readX))
@@ -207,9 +212,12 @@ const update = (container, config) => {
         .attr("r", 3)
         .style('fill', group.color);
 
+      const domain = isNumber(group.min) && isNumber(group.max) ?
+        [group.min, group.max] : d3.extent(data, readY);
+
       const y = d3.scaleLinear()
         .range([plotHeight, 0])
-        .domain(d3.extent(data, readY));
+        .domain(domain);
 
       const chartDotAll = chartDot.merge(chartDotEnter)
         .attr('cx', compose(x, readX))
