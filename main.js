@@ -3,6 +3,9 @@ const MIN_MS = S_MS * 60;
 const HR_MS = MIN_MS * 60;
 const DAY_MS = HR_MS * 24;
 
+const SCRUBBER_HEIGHT = 40;
+const TOOLTIP_SPACE = 30;
+
 const isNumber = x => (typeof x === 'number');
 
 const compose = (a, b) => (x) => a(b(x));
@@ -35,9 +38,10 @@ const calcPlotWidth = (extent, interval, width) => {
 }
 
 // Make room for tooltip and some padding
-const calcPlotHeight = height => height - 180;
+const calcPlotHeight = (height, tooltipHeight) =>
+  ((height - (tooltipHeight + (TOOLTIP_SPACE * 2))) - SCRUBBER_HEIGHT);
 
-const calcSvgHeight = height => height - 40;
+const calcSvgHeight = height => height - SCRUBBER_HEIGHT;
 
 // Calculate the x scale over the whole chart series.
 const calcTimeScale = (domain, interval, width) => {
@@ -66,13 +70,13 @@ const formatTime = d3.timeFormat('%I:%M %p');
 const formatDay = d3.timeFormat("%A %b %e, %Y");
 
 const enter = (container, config) => {
-  const {width, height, interval, tooltipWidth, readX, readY} = config;
+  const {width, height, interval, tooltipWidth, tooltipHeight, readX, readY} = config;
   const series = container.datum();
 
   const extent = extentOverSeries(series, readX);
 
   const plotWidth = calcPlotWidth(extent, interval, width);
-  const plotHeight = calcPlotHeight(height);
+  const plotHeight = calcPlotHeight(height, tooltipHeight);
 
   const x = calcTimeScale(extent, interval, width);
 
@@ -85,7 +89,8 @@ const enter = (container, config) => {
 
   const tooltip = container.append('div')
     .classed('chart-tooltip', true)
-    .style('width', px(tooltipWidth));
+    .style('width', px(tooltipWidth))
+    .style('height', px(tooltipHeight));
 
   const time = tooltip.append('div')
     .classed('chart-time', true);
@@ -179,7 +184,7 @@ const enter = (container, config) => {
 
 // Renders the chart
 const update = (container, config) => {
-  const {width, height, interval, readX, readY} = config;
+  const {width, height, interval, tooltipHeight, readX, readY} = config;
 
   const series = container.datum();
 
@@ -193,9 +198,11 @@ const update = (container, config) => {
   //   some room for the tooltip. It's also wider than the dimensions of the
   //   chart.
   // - svgWidth, svgHeight: the dimensions of the svg element.
-  const plotHeight = height - 180;
+  const plotHeight = calcPlotHeight(height, tooltipHeight);
   const plotWidth = calcPlotWidth(extent, interval, width);
   const svgHeight = calcSvgHeight(height);
+
+  console.log(height, svgHeight, plotHeight);
 
   container
     .style('width', px(width))
@@ -319,7 +326,8 @@ const config = {
   interval: HR_MS,
   width: 800,
   height: 600,
-  tooltipWidth: 240,
+  tooltipHeight: 112,
+  tooltipWidth: 424,
   readX,
   readY
 };

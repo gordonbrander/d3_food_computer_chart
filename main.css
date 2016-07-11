@@ -48,7 +48,6 @@
   bottom: 70px;
   border-top: 3px solid #ff8300;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  height: 80px;
   /* width and margin are set by JS dynamically */
   position: absolute;
   /* Needed to get around hw accel bug in Chrome */
@@ -74,7 +73,7 @@
 
 .chart-progress {
   background-color: #ddd;
-  padding-right: 4px;
+  padding-right: 5px;
   width: 0;
   height: 40px;
 }
@@ -84,8 +83,8 @@
   cursor: -webkit-grab;
   cursor: grab;
   position: absolute;
-  height: 56px;
-  width: 10px;
+  height: 60px;
+  width: 12px;
 }
 .chart-threshold--dragging {
   cursor: -webkit-grabbing;
@@ -95,13 +94,13 @@
 .chart-threshold--cap {
   background: #ff8300;
   border-radius: 100%;
-  height: 10px;
-  width: 10px;
+  height: 12px;
+  width: 12px;
 }
 
 .chart-threshold--line {
   background: #ff8300;
-  margin-left: 4px;
-  height: 46px;
+  margin-left: 5px;
+  height: 48px;
   width: 2px;
 }
