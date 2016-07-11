@@ -3,6 +3,11 @@ const MIN_MS = S_MS * 60;
 const HR_MS = MIN_MS * 60;
 const DAY_MS = HR_MS * 24;
 
+const SCRUBBER_HEIGHT = 40;
+const TOOLTIP_SPACE = 30;
+
+const isNumber = x => (typeof x === 'number');
+
 const compose = (a, b) => (x) => a(b(x));
 
 const px = n => n + 'px';
@@ -32,28 +37,23 @@ const calcPlotWidth = (extent, interval, width) => {
   return Math.round(plotWidth);
 }
 
-// Calculate the x scale over the whole chart series.
-const calcTimeScale = (extent, interval, width) => {
-  return d3.scaleTime()
-    .domain(extent)
-    .range([0, calcPlotWidth(extent, interval, width)]);
-}
+// Make room for tooltip and some padding
+const calcPlotHeight = (height, tooltipHeight) =>
+  ((height - (tooltipHeight + (TOOLTIP_SPACE * 2))) - SCRUBBER_HEIGHT);
 
-const calcY = (data, height, readY) =>
-  d3.scaleLinear()
-    .range([height, 0])
-    .domain(d3.extent(data, readY));
+const calcSvgHeight = height => height - SCRUBBER_HEIGHT;
+
+// Calculate the x scale over the whole chart series.
+const calcTimeScale = (domain, interval, width) => {
+  return d3.scaleTime()
+    .domain(domain)
+    .range([0, calcPlotWidth(domain, interval, width)]);
+}
 
 const clamp = (v, min, max) => Math.max(Math.min(v, max), min);
 
-const calcTooltipX = (x, width, tooltipWidth) => {
-  const halfTooltipWidth = (tooltipWidth / 2);
-  return (x + halfTooltipWidth) > width ?
-    (width - halfTooltipWidth) :
-    (x - halfTooltipWidth) < 0 ?
-    halfTooltipWidth :
-    x;
-}
+const calcTooltipX = (x, width, tooltipWidth) =>
+  clamp(x - (tooltipWidth / 2), 0, width - (tooltipWidth));
 
 const findDataPointFromX = (data, currX, readX) => {
   // Used for deriving y value from x position.
@@ -66,12 +66,18 @@ const findDataPointFromX = (data, currX, readX) => {
   return d;
 }
 
+const formatTime = d3.timeFormat('%I:%M %p');
+const formatDay = d3.timeFormat("%A %b %e, %Y");
+
 const enter = (container, config) => {
-  const {width, interval, tooltipWidth, readX, readY} = config;
+  const {width, height, interval, tooltipWidth, tooltipHeight, readX, readY} = config;
   const series = container.datum();
 
   const extent = extentOverSeries(series, readX);
+
   const plotWidth = calcPlotWidth(extent, interval, width);
+  const plotHeight = calcPlotHeight(height, tooltipHeight);
+
   const x = calcTimeScale(extent, interval, width);
 
   const widthToPlotWidth = d3.scaleLinear()
@@ -84,10 +90,19 @@ const enter = (container, config) => {
   const tooltip = container.append('div')
     .classed('chart-tooltip', true)
     .style('width', px(tooltipWidth))
-    .style('margin-left', px(-1 * (tooltipWidth / 2)));
+    .style('height', px(tooltipHeight));
 
-  const time = tooltip.append('div')
-    .classed('chart-time', true);
+  const timestamp = tooltip.append('div')
+    .classed('chart-timestamp', true);
+
+  const time = timestamp.append('div')
+    .classed('chart-timestamp--time', true);
+
+  const day = timestamp.append('div')
+    .classed('chart-timestamp--day', true);
+
+  const readouts = tooltip.append('div')
+    .classed('chart-readouts', true);
 
   const scrubber = container.append('div')
     .classed('chart-scrubber', true);
@@ -105,6 +120,22 @@ const enter = (container, config) => {
     .classed('chart-threshold--line', true);
 
   const svg = container.append('svg');
+
+  const xAxis = svg.append('g')
+    .classed('chart-time-axis', true)
+    .call(
+      d3.axisBottom(x)
+      .ticks(d3.timeHour)
+      .tickFormat(d3.timeFormat("%I:%M %p %A, %b %e"))
+      .tickPadding(0)
+    );
+
+  container.selectAll('.tick line')
+    .attr('y2', height);
+
+  container.selectAll('.tick text')
+    .attr('text-anchor', 'start')
+    .attr('transform', 'translate(8)');
 
   // Define drag behavior
   const thresholdDrag = d3.drag()
@@ -137,15 +168,24 @@ const enter = (container, config) => {
       xhair.style('transform', translateX(mouseX));
       tooltip.style('transform', translateX(tx));
 
-      d3.select('.chart-tooltip').selectAll('.chart-time')
-        .text(x.invert(plotX));
+      const date = x.invert(plotX);
+
+      d3.select('.chart-tooltip').selectAll('.chart-timestamp--day')
+        .text(formatDay(date));
+
+      d3.select('.chart-tooltip').selectAll('.chart-timestamp--time')
+        .text(formatTime(date));
 
       d3.select('.chart-tooltip').selectAll('.chart-readout--value')
+        .style('color', function (group) {
+          const {color} = group;
+          return color;
+        })
         .text(function (group) {
-          const {data} = group;
+          const {data, unit} = group;
           const d = findDataPointFromX(data, x0, readX);
-          const y = readY(d);
-          return round2x(y);
+          const yv = round2x(readY(d));
+          return yv + unit;
         });
     });
 
@@ -154,14 +194,25 @@ const enter = (container, config) => {
 
 // Renders the chart
 const update = (container, config) => {
-  const {width, height, interval, readX, readY} = config;
-  const plotHeight = height - 180;
+  const {width, height, interval, tooltipHeight, readX, readY} = config;
 
   const series = container.datum();
 
   const extent = extentOverSeries(series, readX);
-  const plotWidth = calcPlotWidth(extent, interval, width);
   const x = calcTimeScale(extent, interval, width);
+
+  // There are 3 kinds of width/height used in this chart:
+  //
+  // - width/height: the overall outer dimensions of the chart
+  // - plotWidth, plotHeight: the dimensions of the plotted lines. This makes
+  //   some room for the tooltip. It's also wider than the dimensions of the
+  //   chart.
+  // - svgWidth, svgHeight: the dimensions of the svg element.
+  const plotHeight = calcPlotHeight(height, tooltipHeight);
+  const plotWidth = calcPlotWidth(extent, interval, width);
+  const svgHeight = calcSvgHeight(height);
+
+  console.log(height, svgHeight, plotHeight);
 
   container
     .style('width', px(width))
@@ -169,7 +220,7 @@ const update = (container, config) => {
 
   const svg = container.selectAll('svg')
     .attr('width', plotWidth)
-    .attr('height', plotHeight);
+    .attr('height', svgHeight);
 
   const group = svg.selectAll('.chart-group')
     .data(series);
@@ -192,9 +243,16 @@ const update = (container, config) => {
     .attr('d', group => {
       const {data} = group;
 
+      const domain = isNumber(group.min) && isNumber(group.max) ?
+        [group.min, group.max] : d3.extent(data, readY);
+
+      const y = d3.scaleLinear()
+        .range([plotHeight, 0])
+        .domain(domain);
+
       const line = d3.line()
         .x(compose(x, readX))
-        .y(compose(calcY(data, plotHeight, readY), readY));
+        .y(compose(y, readY));
 
       return line(data);
     });
@@ -215,12 +273,19 @@ const update = (container, config) => {
         .attr("r", 3)
         .style('fill', group.color);
 
+      const domain = isNumber(group.min) && isNumber(group.max) ?
+        [group.min, group.max] : d3.extent(data, readY);
+
+      const y = d3.scaleLinear()
+        .range([plotHeight, 0])
+        .domain(domain);
+
       const chartDotAll = chartDot.merge(chartDotEnter)
         .attr('cx', compose(x, readX))
-        .attr('cy', compose(calcY(data, plotHeight, readY), readY));
+        .attr('cy', compose(y, readY));
     });
 
-  const readout = d3.select('.chart-tooltip').selectAll('.chart-readout')
+  const readout = d3.select('.chart-readouts').selectAll('.chart-readout')
     .data(series);
 
   const readoutEnter = readout.enter()
@@ -246,33 +311,3 @@ const update = (container, config) => {
 
   return container;
 }
-
-const series = [
-  {
-    title: 'Water Temperature',
-    color: '#00a5ed',
-    data: DATA2,
-    unit: '°C'
-  },
-  {
-    title: 'Air Temperature',
-    color: '#0052b3',
-    data: DATA,
-    unit: '°C'
-  }
-];
-
-const container = d3.select('#chart').datum(series);
-
-const config = {
-  // Duration to show within chart.
-  interval: HR_MS,
-  width: 800,
-  height: 600,
-  tooltipWidth: 240,
-  readX,
-  readY
-};
-
-enter(container, config);
-update(container, config);

@@ -1,6 +1,19 @@
-body {
+.chart {
   background: #f4f4f4;
   font: 10px sans-serif;
+}
+
+.chart-time-axis .domain {
+  display: none;
+}
+
+.chart-time-axis .tick line {
+  stroke: #d8d8d8;
+}
+
+.chart-time-axis .tick text {
+  font-size: 11px;
+  fill: #b1b1b1;
 }
 
 .chart {
@@ -22,6 +35,8 @@ body {
 
 .chart-xhair {
   background: #ff8300;
+  /* This should not interact with mouse */
+  pointer-events: none;
   height: 100%;
   width: 1px;
   position: absolute;
@@ -33,15 +48,53 @@ body {
   bottom: 70px;
   border-top: 3px solid #ff8300;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  height: 80px;
   /* width and margin are set by JS dynamically */
   position: absolute;
+  /* Needed to get around hw accel bug in Chrome */
+  z-index: 9;
+}
+
+.chart-readouts {
+  left: 160px;
+  top: 24px;
+  position: absolute;
+}
+
+.chart-readout {
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.chart-readout--title,
+.chart-readout--value,
+.chart-readout--legend {
+  display: inline-block;
+  margin-right: 8px;
 }
 
 .chart-readout--legend {
   border-radius: 50%;
   height: 8px;
   width: 8px;
+}
+
+.chart-readout--value {
+  font-weight: bold;
+}
+
+.chart-timestamp {
+  left: 24px;
+  top: 24px;
+  position: absolute;
+  width: 136px;
+}
+
+.chart-timestamp--time {
+  font-size: 17px;
+}
+.chart-timestamp--day {
+  color: #b1b1b1;
+  font-size: 11px;
 }
 
 .chart-scrubber {
@@ -51,11 +104,14 @@ body {
   position: absolute;
   width: 100%;
   bottom: 0;
+  /* Needed to get around hw accel bug in Chrome */
+  z-index: 10;
 }
 
 .chart-progress {
-  background-color: #ddd;
-  padding-right: 4px;
+  background: url(stripes-dark-blue.png) repeat left center #ddd;
+  background-size: auto 40px;
+  padding-right: 5px;
   width: 0;
   height: 40px;
 }
@@ -65,8 +121,8 @@ body {
   cursor: -webkit-grab;
   cursor: grab;
   position: absolute;
-  height: 56px;
-  width: 10px;
+  height: 60px;
+  width: 12px;
 }
 .chart-threshold--dragging {
   cursor: -webkit-grabbing;
@@ -76,13 +132,13 @@ body {
 .chart-threshold--cap {
   background: #ff8300;
   border-radius: 100%;
-  height: 10px;
-  width: 10px;
+  height: 12px;
+  width: 12px;
 }
 
 .chart-threshold--line {
   background: #ff8300;
-  margin-left: 4px;
-  height: 46px;
+  margin-left: 5px;
+  height: 48px;
   width: 2px;
 }

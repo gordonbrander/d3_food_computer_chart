@@ -8,6 +8,8 @@
 <div id="chart">
 
 </div>
+<script type="text/javascript" src="https://d3js.org/d3.v4.js"></script>
+<script type="text/javascript" src="main.js"></script>
 <script type="text/javascript">
 var raw = [{
   "_id": "1466091583.67-989316933",
@@ -251,8 +253,41 @@ const DATA = raw
 const DATA2 = DATA.slice(-10);
 
 const log = x => console.log(x);
+
+
+const series = [
+  {
+    title: 'Water Temperature',
+    color: '#00a5ed',
+    data: DATA2,
+    unit: '\xB0C'
+  },
+  {
+    title: 'Air Temperature',
+    color: '#0052b3',
+    data: DATA,
+    unit: '\xB0C',
+    min: 7.2,
+    max: 48.8
+  }
+];
+
+const container = d3.select('#chart').datum(series);
+
+const config = {
+  // Duration to show within chart.
+  interval: HR_MS,
+  width: 800,
+  height: 600,
+  tooltipHeight: 112,
+  tooltipWidth: 424,
+  readX,
+  readY
+};
+
+enter(container, config);
+update(container, config);
+
 </script>
-<script type="text/javascript" src="https://d3js.org/d3.v4.js"></script>
-<script type="text/javascript" src="main.js"></script>
 </body>
 </html>
