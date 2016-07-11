@@ -62,6 +62,9 @@ const findDataPointFromX = (data, currX, readX) => {
   return d;
 }
 
+const formatTime = d3.timeFormat('%I:%M %p');
+const formatDay = d3.timeFormat("%A %b %e, %Y");
+
 const enter = (container, config) => {
   const {width, height, interval, tooltipWidth, readX, readY} = config;
   const series = container.datum();
@@ -86,6 +89,9 @@ const enter = (container, config) => {
 
   const time = tooltip.append('div')
     .classed('chart-time', true);
+
+  const day = tooltip.append('div')
+    .classed('chart-day', true);
 
   const scrubber = container.append('div')
     .classed('chart-scrubber', true);
@@ -146,8 +152,13 @@ const enter = (container, config) => {
       xhair.style('transform', translateX(mouseX));
       tooltip.style('transform', translateX(tx));
 
+      const date = x.invert(plotX);
+
+      d3.select('.chart-tooltip').selectAll('.chart-day')
+        .text(formatDay(date));
+
       d3.select('.chart-tooltip').selectAll('.chart-time')
-        .text(x.invert(plotX));
+        .text(formatTime(date));
 
       d3.select('.chart-tooltip').selectAll('.chart-readout--value')
         .text(function (group) {
