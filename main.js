@@ -33,27 +33,16 @@ const calcPlotWidth = (extent, interval, width) => {
 }
 
 // Calculate the x scale over the whole chart series.
-const calcTimeScale = (extent, interval, width) => {
+const calcTimeScale = (domain, interval, width) => {
   return d3.scaleTime()
-    .domain(extent)
-    .range([0, calcPlotWidth(extent, interval, width)]);
+    .domain(domain)
+    .range([0, calcPlotWidth(domain, interval, width)]);
 }
-
-const calcY = (data, height, readY) =>
-  d3.scaleLinear()
-    .range([height, 0])
-    .domain(d3.extent(data, readY));
 
 const clamp = (v, min, max) => Math.max(Math.min(v, max), min);
 
-const calcTooltipX = (x, width, tooltipWidth) => {
-  const halfTooltipWidth = (tooltipWidth / 2);
-  return (x + halfTooltipWidth) > width ?
-    (width - halfTooltipWidth) :
-    (x - halfTooltipWidth) < 0 ?
-    halfTooltipWidth :
-    x;
-}
+const calcTooltipX = (x, width, tooltipWidth) =>
+  clamp(x - (tooltipWidth / 2), 0, width - (tooltipWidth));
 
 const findDataPointFromX = (data, currX, readX) => {
   // Used for deriving y value from x position.
@@ -83,8 +72,7 @@ const enter = (container, config) => {
 
   const tooltip = container.append('div')
     .classed('chart-tooltip', true)
-    .style('width', px(tooltipWidth))
-    .style('margin-left', px(-1 * (tooltipWidth / 2)));
+    .style('width', px(tooltipWidth));
 
   const time = tooltip.append('div')
     .classed('chart-time', true);
@@ -192,9 +180,13 @@ const update = (container, config) => {
     .attr('d', group => {
       const {data} = group;
 
+      const y = d3.scaleLinear()
+        .range([plotHeight, 0])
+        .domain(d3.extent(data, readY));
+
       const line = d3.line()
         .x(compose(x, readX))
-        .y(compose(calcY(data, plotHeight, readY), readY));
+        .y(compose(y, readY));
 
       return line(data);
     });
@@ -215,9 +207,13 @@ const update = (container, config) => {
         .attr("r", 3)
         .style('fill', group.color);
 
+      const y = d3.scaleLinear()
+        .range([plotHeight, 0])
+        .domain(d3.extent(data, readY));
+
       const chartDotAll = chartDot.merge(chartDotEnter)
         .attr('cx', compose(x, readX))
-        .attr('cy', compose(calcY(data, plotHeight, readY), readY));
+        .attr('cy', compose(y, readY));
     });
 
   const readout = d3.select('.chart-tooltip').selectAll('.chart-readout')
@@ -258,7 +254,9 @@ const series = [
     title: 'Air Temperature',
     color: '#0052b3',
     data: DATA,
-    unit: '°C'
+    unit: '°C',
+    min: 7.2,
+    max: 48.8
   }
 ];
 
