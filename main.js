@@ -37,6 +37,8 @@ const calcPlotWidth = (extent, interval, width) => {
 // Make room for tooltip and some padding
 const calcPlotHeight = height => height - 180;
 
+const calcSvgHeight = height => height - 40;
+
 // Calculate the x scale over the whole chart series.
 const calcTimeScale = (domain, interval, width) => {
   return d3.scaleTime()
@@ -104,9 +106,14 @@ const enter = (container, config) => {
 
   const xAxis = svg.append('g')
     .classed('chart-time-axis', true)
-    .call(d3.axisBottom(x)
+    .call(
+      d3.axisBottom(x)
       .ticks(d3.timeHour)
-      .tickFormat(d3.timeFormat("%I:%M %p %A, %b %e")));
+      .tickFormat(d3.timeFormat("%I:%M %p %A, %b %e"))
+    );
+
+  d3.selectAll('.tick line')
+    .attr('y2', height);
 
   // Define drag behavior
   const thresholdDrag = d3.drag()
@@ -157,13 +164,22 @@ const enter = (container, config) => {
 // Renders the chart
 const update = (container, config) => {
   const {width, height, interval, readX, readY} = config;
-  const plotHeight = height - 180;
 
   const series = container.datum();
 
   const extent = extentOverSeries(series, readX);
-  const plotWidth = calcPlotWidth(extent, interval, width);
   const x = calcTimeScale(extent, interval, width);
+
+  // There are 3 kinds of width/height used in this chart:
+  //
+  // - width/height: the overall outer dimensions of the chart
+  // - plotWidth, plotHeight: the dimensions of the plotted lines. This makes
+  //   some room for the tooltip. It's also wider than the dimensions of the
+  //   chart.
+  // - svgWidth, svgHeight: the dimensions of the svg element.
+  const plotHeight = height - 180;
+  const plotWidth = calcPlotWidth(extent, interval, width);
+  const svgHeight = calcSvgHeight(height);
 
   container
     .style('width', px(width))
@@ -171,7 +187,7 @@ const update = (container, config) => {
 
   const svg = container.selectAll('svg')
     .attr('width', plotWidth)
-    .attr('height', plotHeight);
+    .attr('height', svgHeight);
 
   const group = svg.selectAll('.chart-group')
     .data(series);

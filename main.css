@@ -3,7 +3,10 @@ body {
   font: 10px sans-serif;
 }
 
-.domain,
+.domain {
+  display: none;
+}
+
 .tick line {
   stroke: #d8d8d8;
 }
