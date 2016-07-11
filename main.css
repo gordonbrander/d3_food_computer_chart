@@ -1,4 +1,4 @@
-body {
+.chart {
   background: #f4f4f4;
   font: 10px sans-serif;
 }
@@ -12,6 +12,7 @@ body {
 }
 
 .chart-time-axis .tick text {
+  font-size: 11px;
   fill: #b1b1b1;
 }
 

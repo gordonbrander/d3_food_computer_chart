@@ -116,10 +116,15 @@ const enter = (container, config) => {
       d3.axisBottom(x)
       .ticks(d3.timeHour)
       .tickFormat(d3.timeFormat("%I:%M %p %A, %b %e"))
+      .tickPadding(0)
     );
 
-  d3.selectAll('.tick line')
+  container.selectAll('.tick line')
     .attr('y2', height);
+
+  container.selectAll('.tick text')
+    .attr('text-anchor', 'start')
+    .attr('transform', 'translate(8)');
 
   // Define drag behavior
   const thresholdDrag = d3.drag()
