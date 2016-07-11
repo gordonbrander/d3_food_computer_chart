@@ -3,6 +3,15 @@ body {
   font: 10px sans-serif;
 }
 
+.domain,
+.tick line {
+  stroke: #d8d8d8;
+}
+
+.tick text {
+  fill: #b1b1b1;
+}
+
 .chart {
   overflow: hidden;
   position: relative;
@@ -22,6 +31,8 @@ body {
 
 .chart-xhair {
   background: #ff8300;
+  /* This should not interact with mouse */
+  pointer-events: none;
   height: 100%;
   width: 1px;
   position: absolute;

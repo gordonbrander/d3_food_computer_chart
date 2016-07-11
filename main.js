@@ -34,6 +34,9 @@ const calcPlotWidth = (extent, interval, width) => {
   return Math.round(plotWidth);
 }
 
+// Make room for tooltip and some padding
+const calcPlotHeight = height => height - 180;
+
 // Calculate the x scale over the whole chart series.
 const calcTimeScale = (domain, interval, width) => {
   return d3.scaleTime()
@@ -58,11 +61,14 @@ const findDataPointFromX = (data, currX, readX) => {
 }
 
 const enter = (container, config) => {
-  const {width, interval, tooltipWidth, readX, readY} = config;
+  const {width, height, interval, tooltipWidth, readX, readY} = config;
   const series = container.datum();
 
   const extent = extentOverSeries(series, readX);
+
   const plotWidth = calcPlotWidth(extent, interval, width);
+  const plotHeight = calcPlotHeight(height);
+
   const x = calcTimeScale(extent, interval, width);
 
   const widthToPlotWidth = d3.scaleLinear()
@@ -95,6 +101,12 @@ const enter = (container, config) => {
     .classed('chart-threshold--line', true);
 
   const svg = container.append('svg');
+
+  const xAxis = svg.append('g')
+    .classed('chart-time-axis', true)
+    .call(d3.axisBottom(x)
+      .ticks(d3.timeHour)
+      .tickFormat(d3.timeFormat("%I:%M %p %A, %b %e")));
 
   // Define drag behavior
   const thresholdDrag = d3.drag()
