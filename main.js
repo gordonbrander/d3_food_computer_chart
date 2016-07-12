@@ -5,6 +5,7 @@ const DAY_MS = HR_MS * 24;
 
 const SCRUBBER_HEIGHT = 40;
 const TOOLTIP_SPACE = 30;
+const RATIO_DOMAIN = [0, 1.0];
 
 const isNumber = x => (typeof x === 'number');
 
@@ -122,13 +123,13 @@ const enter = (container, config) => {
   const progress = scrubber.append('div')
     .classed('chart-progress', true);
 
-  const threshold = scrubber.append('div')
+  const handle = scrubber.append('div')
     .classed('chart-handle', true);
 
-  threshold.append('div')
+  handle.append('div')
     .classed('chart-handle--cap', true);
 
-  threshold.append('div')
+  handle.append('div')
     .classed('chart-handle--line', true);
 
   const svg = container.append('svg')
@@ -151,7 +152,7 @@ const enter = (container, config) => {
     .attr('transform', 'translate(8)');
 
   // Define drag behavior
-  const thresholdDrag = d3.drag()
+  const handleDrag = d3.drag()
     .on('start', function () {
       d3.select(this).classed('chart-handle--dragging', true);
     })
@@ -172,13 +173,13 @@ const enter = (container, config) => {
     });
 
   // Attach drag behavior
-  threshold.call(thresholdDrag);
+  handle.call(handleDrag);
 
   scrubber
     .on('click', function () {
       const [x, y] = d3.mouse(container.node());
       const cx = clamp(x, 0, width - 12);
-      threshold.style('transform', translateXY(cx, 0));
+      handle.style('transform', translateXY(cx, 0));
       progress.style('width', px(cx));
 
       svg.style('transform', translateXY(-1 * scrubberXToPlotX(x), 0));
@@ -222,7 +223,7 @@ const enter = (container, config) => {
 
 // Renders the chart
 const update = (container, config) => {
-  const {width, height, interval, tooltipHeight, readX, readY} = config;
+  const {width, height, interval, tooltipHeight, scrubberAt, xhairAt, readX, readY} = config;
 
   const series = container.datum();
 
@@ -240,6 +241,18 @@ const update = (container, config) => {
   const plotWidth = calcPlotWidth(extent, interval, width);
   const svgHeight = calcSvgHeight(height);
 
+  const scrubberRatioToScrubberX = d3.scaleLinear()
+    .domain(RATIO_DOMAIN)
+    .range([0, width - 12])
+    .clamp(true);
+
+  const scrubberRatioToPlotX = d3.scaleLinear()
+    .domain(RATIO_DOMAIN)
+    // Translate up to the point that the right side of the plot is adjacent
+    // to the right side of the viewport.
+    .range([0, plotWidth - width])
+    .clamp(true);
+
   container
     .style('width', px(width))
     .style('height', px(height));
@@ -247,6 +260,17 @@ const update = (container, config) => {
   const svg = container.selectAll('svg')
     .attr('width', plotWidth)
     .attr('height', svgHeight);
+
+
+  const progress = d3.select('.chart-progress');
+  const handle = d3.select('.chart-handle');
+
+  // Position elements based on scrubber state
+  const scrubberX = scrubberRatioToScrubberX(scrubberAt);
+  handle.style('transform', translateXY(scrubberX, 0));
+  progress.style('width', px(scrubberX));
+  svg.style('transform', translateXY(-1 * scrubberRatioToPlotX(scrubberAt), 0));
+
 
   const group = svg.selectAll('.chart-group')
     .data(series);
