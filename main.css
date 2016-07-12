@@ -3,6 +3,10 @@
   font: 10px sans-serif;
 }
 
+.chart-svg {
+  position: absolute;
+}
+
 .chart-time-axis .domain {
   display: none;
 }
@@ -41,6 +45,16 @@
   width: 1px;
   position: absolute;
   top: 0;
+}
+
+.chart-xhair--tick {
+  border: 5px solid #ff8300;
+  border-color: transparent transparent #ff8300 transparent;
+  margin-left: -5px;
+  height: 0;
+  width: 0;
+  position: absolute;
+  z-index: 10;
 }
 
 .chart-tooltip {
