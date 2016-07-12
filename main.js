@@ -223,8 +223,6 @@ const update = (container, config) => {
   const plotWidth = calcPlotWidth(extent, interval, width);
   const svgHeight = calcSvgHeight(height);
 
-  console.log(height, svgHeight, plotHeight);
-
   container
     .style('width', px(width))
     .style('height', px(height));
