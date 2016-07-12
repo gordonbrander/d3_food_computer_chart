@@ -3,6 +3,10 @@
   font: 10px sans-serif;
 }
 
+.chart-svg {
+  position: absolute;
+}
+
 .chart-time-axis .domain {
   display: none;
 }
@@ -41,6 +45,16 @@
   width: 1px;
   position: absolute;
   top: 0;
+}
+
+.chart-xhair--tick {
+  border: 5px solid #ff8300;
+  border-color: transparent transparent #ff8300 transparent;
+  margin-left: -5px;
+  height: 0;
+  width: 0;
+  position: absolute;
+  z-index: 10;
 }
 
 .chart-tooltip {
@@ -116,7 +130,7 @@
   height: 40px;
 }
 
-.chart-threshold {
+.chart-handle {
   bottom: 0;
   cursor: -webkit-grab;
   cursor: grab;
@@ -124,19 +138,19 @@
   height: 60px;
   width: 12px;
 }
-.chart-threshold--dragging {
+.chart-handle--dragging {
   cursor: -webkit-grabbing;
   cursor: grabbing;
 }
 
-.chart-threshold--cap {
+.chart-handle--cap {
   background: #ff8300;
   border-radius: 100%;
   height: 12px;
   width: 12px;
 }
 
-.chart-threshold--line {
+.chart-handle--line {
   background: #ff8300;
   margin-left: 5px;
   height: 48px;
