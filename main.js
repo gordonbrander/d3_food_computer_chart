@@ -167,6 +167,16 @@ const enter = (container, config) => {
   // Attach drag behavior
   threshold.call(thresholdDrag);
 
+  scrubber
+    .on('click', function () {
+      const [x, y] = d3.mouse(container.node());
+      const cx = clamp(x, 0, width);
+      threshold.style('transform', translateXY(cx, 0));
+      progress.style('width', px(cx));
+
+      svg.style('transform', translateXY(-1 * widthToPlotWidth(cx), 0));
+    });
+
   container
     .classed('chart', true)
     .on('mousemove', function () {
