@@ -18,6 +18,7 @@ const readX = d => d.x * 1000;
 const readY = d => d.y;
 
 const getData = series => series.data;
+const getGroupColor = group => group.color;
 
 // Round to 2 decimal places.
 const round2x = float =>
@@ -191,25 +192,24 @@ const enter = (container, config) => {
       // Adapted from http://bl.ocks.org/mbostock/3902569 (GPL)
       const [mouseX, mouseY] = d3.mouse(this);
       const [plotX, plotY] = d3.mouse(svg.node());
-      const x0 = x.invert(plotX);
       const tx = calcTooltipX(mouseX, width, tooltipWidth);
       xhair.style('transform', translateXY(mouseX, 0));
       tick.style('transform', translateXY(mouseX, tickTop));
+
+      const tooltip = d3.select('.chart-tooltip');
+
       tooltip.style('transform', translateXY(tx, 0));
 
-      const date = x.invert(plotX);
+      const x0 = x.invert(plotX);
 
-      d3.select('.chart-tooltip').selectAll('.chart-timestamp--day')
-        .text(formatDay(date));
+      tooltip.selectAll('.chart-timestamp--day')
+        .text(formatDay(x0));
 
-      d3.select('.chart-tooltip').selectAll('.chart-timestamp--time')
-        .text(formatTime(date));
+      tooltip.selectAll('.chart-timestamp--time')
+        .text(formatTime(x0));
 
-      d3.select('.chart-tooltip').selectAll('.chart-readout--value')
-        .style('color', function (group) {
-          const {color} = group;
-          return color;
-        })
+      tooltip.selectAll('.chart-readout--value')
+        .style('color', getGroupColor)
         .text(function (group) {
           const {data, unit} = group;
           const d = findDataPointFromX(data, x0, readX);
@@ -223,7 +223,7 @@ const enter = (container, config) => {
 
 // Renders the chart
 const update = (container, config) => {
-  const {width, height, interval, tooltipHeight, scrubberAt, xhairAt, readX, readY} = config;
+  const {width, height, interval, tooltipWidth, tooltipHeight, scrubberAt, xhairAt, readX, readY} = config;
 
   const series = container.datum();
 
@@ -240,6 +240,7 @@ const update = (container, config) => {
   const plotHeight = calcPlotHeight(height, tooltipHeight);
   const plotWidth = calcPlotWidth(extent, interval, width);
   const svgHeight = calcSvgHeight(height);
+  const tickTop = calcXhairTickTop(height, tooltipHeight);
 
   const scrubberRatioToScrubberX = d3.scaleLinear()
     .domain(RATIO_DOMAIN)
@@ -253,24 +254,25 @@ const update = (container, config) => {
     .range([0, plotWidth - width])
     .clamp(true);
 
+  const xhairRatioToPlotX = d3.scaleLinear()
+    .domain(RATIO_DOMAIN)
+    .range([0, plotWidth])
+    .clamp(true);
+
+  const xhairRatioToXhairX = d3.scaleLinear()
+    .domain(RATIO_DOMAIN)
+    .range([0, width])
+    .clamp(true);
+
   container
     .style('width', px(width))
     .style('height', px(height));
 
   const svg = container.selectAll('svg')
     .attr('width', plotWidth)
-    .attr('height', svgHeight);
-
-
-  const progress = d3.select('.chart-progress');
-  const handle = d3.select('.chart-handle');
-
-  // Position elements based on scrubber state
-  const scrubberX = scrubberRatioToScrubberX(scrubberAt);
-  handle.style('transform', translateXY(scrubberX, 0));
-  progress.style('width', px(scrubberX));
-  svg.style('transform', translateXY(-1 * scrubberRatioToPlotX(scrubberAt), 0));
-
+    .attr('height', svgHeight)
+    // Adjust position to scrubber position
+    .style('transform', translateXY(-1 * scrubberRatioToPlotX(scrubberAt), 0));
 
   const group = svg.selectAll('.chart-group')
     .data(series);
@@ -335,6 +337,38 @@ const update = (container, config) => {
         .attr('cy', compose(y, readY));
     });
 
+  // Position elements based on scrubber state
+  const scrubberX = scrubberRatioToScrubberX(scrubberAt);
+
+  const handle = d3.select('.chart-handle')
+    .style('transform', translateXY(scrubberX, 0));
+
+  const progress = d3.select('.chart-progress')
+    .style('width', px(scrubberX));
+
+  // Position tooltip based on tooltip state
+  // Adapted from http://bl.ocks.org/mbostock/3902569 (GPL)
+  const xhairX = xhairRatioToXhairX(xhairAt);
+  const tx = calcTooltipX(xhairX, width, tooltipWidth);
+
+  const xhair = d3.select('.chart-xhair')
+    .style('transform', translateXY(xhairX, 0));
+
+  const tick = d3.select('.chart-tick')
+    .style('transform', translateXY(xhairX, tickTop));
+
+  const tooltip = d3.select('.chart-tooltip');
+
+  tooltip.style('transform', translateXY(tx, 0));
+
+  const x0 = x.invert(xhairRatioToPlotX(xhairAt));
+
+  tooltip.selectAll('.chart-timestamp--day')
+    .text(formatDay(x0));
+
+  tooltip.selectAll('.chart-timestamp--time')
+    .text(formatTime(x0));
+
   const readout = d3.select('.chart-readouts').selectAll('.chart-readout')
     .data(series);
 
@@ -358,6 +392,15 @@ const update = (container, config) => {
 
   readoutEnter.append('div')
     .classed('chart-readout--value', true);
+
+  readoutAll.select('.chart-readout--value')
+    .style('color', getGroupColor)
+    .text(function (group) {
+      const {data, unit} = group;
+      const d = findDataPointFromX(data, x0, readX);
+      const yv = round2x(readY(d));
+      return yv + unit;
+    });
 
   return container;
 }
