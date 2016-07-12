@@ -2,12 +2,16 @@
 <html>
 <head>
   <title></title>
+  <style type="text/css">
+    body {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
   <link rel="stylesheet" type="text/css" href="main.css">
 </head>
 <body>
-<div id="chart">
-
-</div>
+<div id="chart"></div>
 <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script>
 <script type="text/javascript" src="main.js"></script>
 <script type="text/javascript">
@@ -254,7 +258,6 @@ const DATA2 = DATA.slice(-10);
 
 const log = x => console.log(x);
 
-
 const series = [
   {
     title: 'Water Temperature',
@@ -277,8 +280,8 @@ const container = d3.select('#chart').datum(series);
 const config = {
   // Duration to show within chart.
   interval: HR_MS,
-  width: 800,
-  height: 600,
+  width: window.innerWidth,
+  height: window.innerHeight,
   tooltipHeight: 112,
   tooltipWidth: 424,
   readX,
