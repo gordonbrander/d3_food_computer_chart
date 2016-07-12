@@ -85,9 +85,12 @@ const enter = (container, config) => {
 
   const x = calcTimeScale(extent, interval, width);
 
-  const widthToPlotWidth = d3.scaleLinear()
-    .domain([0, width])
-    .range([0, plotWidth]);
+  const scrubberXToPlotX = d3.scaleLinear()
+    .domain([0, width - 12])
+    // Translate up to the point that the right side of the plot is adjacent
+    // to the right side of the viewport.
+    .range([0, plotWidth - width])
+    .clamp(true);
 
   const xhair = container.append('div')
     .classed('chart-xhair', true);
@@ -120,13 +123,13 @@ const enter = (container, config) => {
     .classed('chart-progress', true);
 
   const threshold = scrubber.append('div')
-    .classed('chart-threshold', true);
+    .classed('chart-handle', true);
 
   threshold.append('div')
-    .classed('chart-threshold--cap', true);
+    .classed('chart-handle--cap', true);
 
   threshold.append('div')
-    .classed('chart-threshold--line', true);
+    .classed('chart-handle--line', true);
 
   const svg = container.append('svg')
     .classed('chart-svg', true);
@@ -150,18 +153,22 @@ const enter = (container, config) => {
   // Define drag behavior
   const thresholdDrag = d3.drag()
     .on('start', function () {
-      d3.select(this).classed('chart-threshold--dragging', true);
+      d3.select(this).classed('chart-handle--dragging', true);
     })
     .on('drag', function () {
+      // Need a scale here for mapping container width to scrubber width
       const [x, y] = d3.mouse(container.node());
-      const cx = clamp(x, 0, width);
+      // Clamp scrubber handle x to width - 12, so handle never ends up outside
+      // viewport. You can continue to drag mouse past this point, but scrubber
+      // will not disappear beyond the fold.
+      const cx = clamp(x, 0, width - 12)
       d3.select(this).style('transform', translateXY(cx, 0));
       progress.style('width', px(cx));
 
-      svg.style('transform', translateXY(-1 * widthToPlotWidth(cx), 0));
+      svg.style('transform', translateXY(-1 * scrubberXToPlotX(x), 0));
     })
     .on('end', function () {
-      d3.select(this).classed('chart-threshold--dragging', false);
+      d3.select(this).classed('chart-handle--dragging', false);
     });
 
   // Attach drag behavior
@@ -170,11 +177,11 @@ const enter = (container, config) => {
   scrubber
     .on('click', function () {
       const [x, y] = d3.mouse(container.node());
-      const cx = clamp(x, 0, width);
+      const cx = clamp(x, 0, width - 12);
       threshold.style('transform', translateXY(cx, 0));
       progress.style('width', px(cx));
 
-      svg.style('transform', translateXY(-1 * widthToPlotWidth(cx), 0));
+      svg.style('transform', translateXY(-1 * scrubberXToPlotX(x), 0));
     });
 
   container
