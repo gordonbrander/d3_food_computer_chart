@@ -249,12 +249,21 @@ const readPoint = d => ({
 const compareByX = (a, b) =>
   a.x > b.x ? 1 : -1;
 
-const DATA = raw
+const MEASURED1 = raw
   .filter(d => d.variable === 'air_temperature')
   .map(readPoint)
   .sort(compareByX);
 
-const DATA2 = DATA.slice(-10);
+const DESIRED1 = raw
+  .filter(d => d.variable === 'air_temperature')
+  .map(d => {
+    const point = readPoint(d);
+    point.y = point.y + Math.sin(point.x);
+    return point;
+  })
+  .sort(compareByX);
+
+const MEASURED2 = MEASURED1.slice(-10);
 
 const log = x => console.log(x);
 
@@ -262,13 +271,15 @@ const series = [
   {
     title: 'Water Temperature',
     color: '#00a5ed',
-    measured: DATA2,
+    desired: [],
+    measured: MEASURED2,
     unit: '\xB0C'
   },
   {
     title: 'Air Temperature',
     color: '#0052b3',
-    measured: DATA,
+    desired: DESIRED1,
+    measured: MEASURED1,
     unit: '\xB0C',
     min: 7.2,
     max: 48.8

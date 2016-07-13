@@ -264,17 +264,23 @@ const update = (container, config) => {
 
   groupEnter
     .append('path')
-      .classed('chart-line', true)
+      .classed('chart-measured', true)
+      .style('stroke', group => group.color);
+
+  groupEnter
+    .append('path')
+      .classed('chart-desired', true)
       .style('stroke', group => group.color);
 
   const groupAll = group.merge(groupEnter);
 
-  groupAll.select('.chart-line')
+  groupAll.select('.chart-desired')
     .attr('d', group => {
-      const data = getGroupMeasured(group);
+      const desired = getGroupDesired(group);
+      const measured = getGroupMeasured(group);
 
       const domain = isNumber(group.min) && isNumber(group.max) ?
-        [group.min, group.max] : d3.extent(data, readY);
+        [group.min, group.max] : d3.extent(measured, readY);
 
       const y = d3.scaleLinear()
         .range([plotHeight, 0])
@@ -284,15 +290,33 @@ const update = (container, config) => {
         .x(compose(x, readX))
         .y(compose(y, readY));
 
-      return line(data);
+      return line(desired);
+    });
+
+  groupAll.select('.chart-measured')
+    .attr('d', group => {
+      const measured = getGroupMeasured(group);
+
+      const domain = isNumber(group.min) && isNumber(group.max) ?
+        [group.min, group.max] : d3.extent(measured, readY);
+
+      const y = d3.scaleLinear()
+        .range([plotHeight, 0])
+        .domain(domain);
+
+      const line = d3.line()
+        .x(compose(x, readX))
+        .y(compose(y, readY));
+
+      return line(measured);
     });
 
   groupAll
     .each(function (group) {
-      const data = getGroupMeasured(group);
+      const measured = getGroupMeasured(group);
 
       const chartDot = d3.select(this).selectAll('.chart-dot')
-        .data(data);
+        .data(measured);
 
       const chartDotExit = chartDot.exit()
         .remove();
@@ -304,7 +328,7 @@ const update = (container, config) => {
         .style('fill', group.color);
 
       const domain = isNumber(group.min) && isNumber(group.max) ?
-        [group.min, group.max] : d3.extent(data, readY);
+        [group.min, group.max] : d3.extent(measured, readY);
 
       const y = d3.scaleLinear()
         .range([plotHeight, 0])

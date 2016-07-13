@@ -25,7 +25,14 @@
   position: relative;
 }
 
-.chart-line {
+.chart-desired {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1px;
+  stroke-dasharray: 1, 6;  
+}
+
+.chart-measured {
   fill: none;
   stroke: steelblue;
   stroke-width: 1px;
