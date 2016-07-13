@@ -17,8 +17,9 @@ const translateXY = (x, y) => 'translateX(' + x + 'px) translateY(' + y + 'px)';
 const readX = d => d.x * 1000;
 const readY = d => d.y;
 
-const getData = series => series.data;
 const getGroupColor = group => group.color;
+const getGroupMeasured = group => group.measured;
+const getGroupDesired = group => group.desired;
 
 // Round to 2 decimal places.
 const round2x = float =>
@@ -30,7 +31,7 @@ const flatten = arrays => Array.prototype.concat.apply(Array, arrays);
 // Calculate the extent over the whole chart series. In other words, find the
 // lowest value and the highest value for the series.
 const extentOverSeries = (series, readX) =>
-  d3.extent(flatten(series.map(getData)), readX);
+  d3.extent(flatten(series.map(getGroupMeasured)), readX);
 
 const calcPlotWidth = (extent, interval, width) => {
   const durationMs = extent[1] - extent[0];
@@ -270,7 +271,7 @@ const update = (container, config) => {
 
   groupAll.select('.chart-line')
     .attr('d', group => {
-      const {data} = group;
+      const data = getGroupMeasured(group);
 
       const domain = isNumber(group.min) && isNumber(group.max) ?
         [group.min, group.max] : d3.extent(data, readY);
@@ -288,10 +289,10 @@ const update = (container, config) => {
 
   groupAll
     .each(function (group) {
-      const {data} = group;
+      const data = getGroupMeasured(group);
 
       const chartDot = d3.select(this).selectAll('.chart-dot')
-        .data(group.data);
+        .data(data);
 
       const chartDotExit = chartDot.exit()
         .remove();
@@ -375,7 +376,8 @@ const update = (container, config) => {
   readoutAll.select('.chart-readout--value')
     .style('color', getGroupColor)
     .text(function (group) {
-      const {data, unit} = group;
+      const data = getGroupMeasured(group);
+      const unit = group.unit;
       const d = findDataPointFromX(data, x0, readX);
       const yv = round2x(readY(d));
       return yv + unit;
