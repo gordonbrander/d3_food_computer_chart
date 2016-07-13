@@ -83,13 +83,16 @@
 }
 
 .chart-readout {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 20px;
 }
 
 .chart-readout--title,
 .chart-readout--value,
-.chart-readout--legend {
+.chart-readout--legend,
+.chart-readout--target,
+.chart-readout--desired,
+.chart-readout--measured {
   display: inline-block;
   margin-right: 8px;
 }

@@ -18,6 +18,7 @@ const readX = d => d.x * 1000;
 const readY = d => d.y;
 
 const getGroupColor = group => group.color;
+const getGroupTitle = group => group.title;
 const getGroupMeasured = group => group.measured;
 const getGroupDesired = group => group.desired;
 
@@ -62,14 +63,19 @@ const calcTooltipX = (x, width, tooltipWidth) =>
   clamp(x - (tooltipWidth / 2), 0, width - (tooltipWidth));
 
 const findDataPointFromX = (data, currX, readX) => {
-  // Used for deriving y value from x position.
-  const bisectDate = d3.bisector(readX).left;
-  const i = bisectDate(data, currX, 1);
-  const d0 = data[i - 1];
-  const d1 = data[i];
-  // Pick closer of the two.
-  const d = currX - readX(d0) > readX(d1) - currX ? d1 : d0;
-  return d;
+  if (data.length > 0) {
+    // Used for deriving y value from x position.
+    const bisectDate = d3.bisector(readX).left;
+    const i = bisectDate(data, currX, 1);
+    const d0 = data[i - 1];
+    const d1 = data[i];
+    // Pick closer of the two.
+    const d = currX - readX(d0) > readX(d1) - currX ? d1 : d0;
+    return d;
+  }
+  else {
+    return null;
+  }
 }
 
 const formatTime = d3.timeFormat('%I:%M %p');
@@ -381,30 +387,55 @@ const update = (container, config) => {
     .classed('chart-readout', true);  
 
   readoutEnter.append('div')
-    .classed('chart-readout--legend', true);
+    .classed('chart-readout--legend', true)
+    .style('background-color', getGroupColor);
 
   readoutEnter.append('div')
     .classed('chart-readout--title', true);
 
-  const readoutAll = readout.merge(readoutEnter);
-
-  readoutAll.select('.chart-readout--legend')
-    .style('background-color', getGroupColor);
-
-  readoutAll.select('.chart-readout--title')
-    .text(d => d.title);
+  readoutEnter.append('div')
+    .classed('chart-readout--measured', true)
+    .style('color', getGroupColor);
 
   readoutEnter.append('div')
-    .classed('chart-readout--value', true);
+    .classed('chart-readout--target', true)
+    .text('Target:');
 
-  readoutAll.select('.chart-readout--value')
-    .style('color', getGroupColor)
+  readoutEnter.append('div')
+    .classed('chart-readout--desired', true)
+    .style('color', getGroupColor);
+
+  const readoutAll = readout.merge(readoutEnter);
+
+  readoutAll.select('.chart-readout--title')
+    .text(getGroupTitle);
+
+  readoutAll.select('.chart-readout--measured')
     .text(function (group) {
       const data = getGroupMeasured(group);
       const unit = group.unit;
       const d = findDataPointFromX(data, x0, readX);
-      const yv = round2x(readY(d));
-      return yv + unit;
+      if (d) {
+        const yv = round2x(readY(d));
+        return yv + unit;        
+      }
+      else {
+        return '-';
+      }
+    });
+
+  readoutAll.select('.chart-readout--desired')
+    .text(function (group) {
+      const data = getGroupDesired(group);
+      const unit = group.unit;
+      const d = findDataPointFromX(data, x0, readX);
+      if (d) {
+        const yv = round2x(readY(d));
+        return yv + unit;        
+      }
+      else {
+        return '-';
+      }
     });
 
   return container;
