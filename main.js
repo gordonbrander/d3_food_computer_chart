@@ -5,6 +5,7 @@ const DAY_MS = HR_MS * 24;
 
 const SCRUBBER_HEIGHT = 40;
 const TOOLTIP_SPACE = 30;
+const RATIO_DOMAIN = [0, 1.0];
 
 const isNumber = x => (typeof x === 'number');
 
@@ -17,6 +18,7 @@ const readX = d => d.x * 1000;
 const readY = d => d.y;
 
 const getData = series => series.data;
+const getGroupColor = group => group.color;
 
 // Round to 2 decimal places.
 const round2x = float =>
@@ -85,6 +87,16 @@ const enter = (container, config) => {
 
   const x = calcTimeScale(extent, interval, width);
 
+  const scrubberRatioToScrubberX = d3.scaleLinear()
+    .domain(RATIO_DOMAIN)
+    .range([0, width - 12])
+    .clamp(true);
+
+  const xhairRatioToXhairX = d3.scaleLinear()
+    .domain(RATIO_DOMAIN)
+    .range([0, width])
+    .clamp(true);
+
   const scrubberXToPlotX = d3.scaleLinear()
     .domain([0, width - 12])
     // Translate up to the point that the right side of the plot is adjacent
@@ -122,13 +134,13 @@ const enter = (container, config) => {
   const progress = scrubber.append('div')
     .classed('chart-progress', true);
 
-  const threshold = scrubber.append('div')
+  const handle = scrubber.append('div')
     .classed('chart-handle', true);
 
-  threshold.append('div')
+  handle.append('div')
     .classed('chart-handle--cap', true);
 
-  threshold.append('div')
+  handle.append('div')
     .classed('chart-handle--line', true);
 
   const svg = container.append('svg')
@@ -151,37 +163,29 @@ const enter = (container, config) => {
     .attr('transform', 'translate(8)');
 
   // Define drag behavior
-  const thresholdDrag = d3.drag()
+  const handleDrag = d3.drag()
     .on('start', function () {
       d3.select(this).classed('chart-handle--dragging', true);
     })
     .on('drag', function () {
-      // Need a scale here for mapping container width to scrubber width
       const [x, y] = d3.mouse(container.node());
-      // Clamp scrubber handle x to width - 12, so handle never ends up outside
-      // viewport. You can continue to drag mouse past this point, but scrubber
-      // will not disappear beyond the fold.
-      const cx = clamp(x, 0, width - 12)
-      d3.select(this).style('transform', translateXY(cx, 0));
-      progress.style('width', px(cx));
-
-      svg.style('transform', translateXY(-1 * scrubberXToPlotX(x), 0));
+      const scrubberAt = scrubberRatioToScrubberX.invert(x);
+      config.scrubberAt = scrubberAt;
+      container.call(update, config);
     })
     .on('end', function () {
       d3.select(this).classed('chart-handle--dragging', false);
     });
 
   // Attach drag behavior
-  threshold.call(thresholdDrag);
+  handle.call(handleDrag);
 
   scrubber
     .on('click', function () {
       const [x, y] = d3.mouse(container.node());
-      const cx = clamp(x, 0, width - 12);
-      threshold.style('transform', translateXY(cx, 0));
-      progress.style('width', px(cx));
-
-      svg.style('transform', translateXY(-1 * scrubberXToPlotX(x), 0));
+      const scrubberAt = scrubberRatioToScrubberX.invert(x);
+      config.scrubberAt = scrubberAt;
+      container.call(update, config);
     });
 
   container
@@ -189,32 +193,9 @@ const enter = (container, config) => {
     .on('mousemove', function () {
       // Adapted from http://bl.ocks.org/mbostock/3902569 (GPL)
       const [mouseX, mouseY] = d3.mouse(this);
-      const [plotX, plotY] = d3.mouse(svg.node());
-      const x0 = x.invert(plotX);
-      const tx = calcTooltipX(mouseX, width, tooltipWidth);
-      xhair.style('transform', translateXY(mouseX, 0));
-      tick.style('transform', translateXY(mouseX, tickTop));
-      tooltip.style('transform', translateXY(tx, 0));
-
-      const date = x.invert(plotX);
-
-      d3.select('.chart-tooltip').selectAll('.chart-timestamp--day')
-        .text(formatDay(date));
-
-      d3.select('.chart-tooltip').selectAll('.chart-timestamp--time')
-        .text(formatTime(date));
-
-      d3.select('.chart-tooltip').selectAll('.chart-readout--value')
-        .style('color', function (group) {
-          const {color} = group;
-          return color;
-        })
-        .text(function (group) {
-          const {data, unit} = group;
-          const d = findDataPointFromX(data, x0, readX);
-          const yv = round2x(readY(d));
-          return yv + unit;
-        });
+      const xhairAt = xhairRatioToXhairX.invert(mouseX);
+      config.xhairAt = xhairAt;
+      container.call(update, config);
     });
 
   return container;
@@ -222,7 +203,7 @@ const enter = (container, config) => {
 
 // Renders the chart
 const update = (container, config) => {
-  const {width, height, interval, tooltipHeight, readX, readY} = config;
+  const {width, height, interval, tooltipWidth, tooltipHeight, scrubberAt, xhairAt, readX, readY} = config;
 
   const series = container.datum();
 
@@ -239,6 +220,26 @@ const update = (container, config) => {
   const plotHeight = calcPlotHeight(height, tooltipHeight);
   const plotWidth = calcPlotWidth(extent, interval, width);
   const svgHeight = calcSvgHeight(height);
+  const tickTop = calcXhairTickTop(height, tooltipHeight);
+
+  const scrubberRatioToScrubberX = d3.scaleLinear()
+    .domain(RATIO_DOMAIN)
+    .range([0, width - 12])
+    .clamp(true);
+
+  const scrubberRatioToPlotX = d3.scaleLinear()
+    .domain(RATIO_DOMAIN)
+    // Translate up to the point that the right side of the plot is adjacent
+    // to the right side of the viewport.
+    .range([0, plotWidth - width])
+    .clamp(true);
+
+  const xhairRatioToXhairX = d3.scaleLinear()
+    .domain(RATIO_DOMAIN)
+    .range([0, width])
+    .clamp(true);
+
+  const plotX = scrubberRatioToPlotX(scrubberAt);
 
   container
     .style('width', px(width))
@@ -246,7 +247,9 @@ const update = (container, config) => {
 
   const svg = container.selectAll('svg')
     .attr('width', plotWidth)
-    .attr('height', svgHeight);
+    .attr('height', svgHeight)
+    // Adjust position to scrubber position
+    .style('transform', translateXY(-1 * plotX, 0));
 
   const group = svg.selectAll('.chart-group')
     .data(series);
@@ -311,6 +314,40 @@ const update = (container, config) => {
         .attr('cy', compose(y, readY));
     });
 
+  // Position elements based on scrubber state
+  const scrubberX = scrubberRatioToScrubberX(scrubberAt);
+
+  const handle = d3.select('.chart-handle')
+    .style('transform', translateXY(scrubberX, 0));
+
+  const progress = d3.select('.chart-progress')
+    .style('width', px(scrubberX));
+
+  // Position tooltip based on tooltip state
+  // Adapted from http://bl.ocks.org/mbostock/3902569 (GPL)
+  const xhairX = xhairRatioToXhairX(xhairAt);
+  const tx = calcTooltipX(xhairX, width, tooltipWidth);
+
+  const xhair = d3.select('.chart-xhair')
+    .style('transform', translateXY(xhairX, 0));
+
+  const tick = d3.select('.chart-xhair--tick')
+    .style('transform', translateXY(xhairX, tickTop));
+
+  const tooltip = d3.select('.chart-tooltip');
+
+  tooltip.style('transform', translateXY(tx, 0));
+
+  // Calculate xhair absolute position by adding crosshair position in viewport
+  // to plot offset.
+  const x0 = x.invert(plotX + xhairX);
+
+  tooltip.selectAll('.chart-timestamp--day')
+    .text(formatDay(x0));
+
+  tooltip.selectAll('.chart-timestamp--time')
+    .text(formatTime(x0));
+
   const readout = d3.select('.chart-readouts').selectAll('.chart-readout')
     .data(series);
 
@@ -327,13 +364,22 @@ const update = (container, config) => {
   const readoutAll = readout.merge(readoutEnter);
 
   readoutAll.select('.chart-readout--legend')
-    .style('background-color', d => d.color);
+    .style('background-color', getGroupColor);
 
   readoutAll.select('.chart-readout--title')
     .text(d => d.title);
 
   readoutEnter.append('div')
     .classed('chart-readout--value', true);
+
+  readoutAll.select('.chart-readout--value')
+    .style('color', getGroupColor)
+    .text(function (group) {
+      const {data, unit} = group;
+      const d = findDataPointFromX(data, x0, readX);
+      const yv = round2x(readY(d));
+      return yv + unit;
+    });
 
   return container;
 }
