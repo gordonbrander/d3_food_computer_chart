@@ -399,7 +399,7 @@ const update = (container, config) => {
 
   readoutEnter.append('div')
     .classed('chart-readout--target', true)
-    .text('Target:');
+    .text(config.langTarget || 'Target');
 
   readoutEnter.append('div')
     .classed('chart-readout--desired', true)

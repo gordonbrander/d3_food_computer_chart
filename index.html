@@ -269,14 +269,32 @@ const log = x => console.log(x);
 
 const series = [
   {
-    title: 'Water Temperature',
+    title: 'Water',
     color: '#00a5ed',
     desired: [],
     measured: MEASURED2,
     unit: '\xB0C'
   },
   {
-    title: 'Air Temperature',
+    title: 'Air',
+    color: '#0052b3',
+    desired: DESIRED1,
+    measured: MEASURED1,
+    unit: '\xB0C',
+    min: 7.2,
+    max: 48.8
+  },
+  {
+    title: 'Dissolved Oxygen',
+    color: '#0052b3',
+    desired: DESIRED1,
+    measured: MEASURED1,
+    unit: '\xB0C',
+    min: 7.2,
+    max: 48.8
+  },
+  {
+    title: 'CO2',
     color: '#0052b3',
     desired: DESIRED1,
     measured: MEASURED1,

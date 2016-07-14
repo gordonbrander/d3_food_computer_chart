@@ -78,13 +78,13 @@
 
 .chart-readouts {
   left: 160px;
-  top: 24px;
+  top: 20px;
   position: absolute;
 }
 
 .chart-readout {
   font-size: 12px;
-  line-height: 20px;
+  line-height: 18px;
 }
 
 .chart-readout--title,
@@ -94,7 +94,11 @@
 .chart-readout--desired,
 .chart-readout--measured {
   display: inline-block;
-  margin-right: 8px;
+  margin-right: .5em;
+}
+
+.chart-readout--target {
+  margin-left: .25em;
 }
 
 .chart-readout--legend {
@@ -103,13 +107,14 @@
   width: 8px;
 }
 
-.chart-readout--value {
+.chart-readout--desired,
+.chart-readout--measured {
   font-weight: bold;
 }
 
 .chart-timestamp {
   left: 24px;
-  top: 24px;
+  top: 22px;
   position: absolute;
   width: 136px;
 }
